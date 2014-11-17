@@ -66,9 +66,9 @@ import_timelog <- function(name = "timelog_for_ps_history.csv", wd = 'C:/R/works
     
     time_all <- dcast(time_all, Account.Name ~ reportingPeriod + Billable)
 
-	if(output %in% c("psh"){
+	if(output %in% c("psh")){
 		time_all
-	}else if(output %in% c("simple"){
+	}else if(output %in% c("simple")){
 		timelog
 	}
 	
@@ -181,9 +181,9 @@ import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/w
     merged <- merge(unique_customers, svc_by_qtr, by = "Account.Name", all.x = T)
     merged <- merged[order(merged$Account.Name), ]
     
-	if(output %in% c("psh"){
+	if(output %in% c("psh")){
 		merged
-	}else if(output %in% c("simple"){
+	}else if(output %in% c("simple")){
 		services
 	}
     
