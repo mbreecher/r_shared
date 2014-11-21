@@ -47,7 +47,9 @@ import_timelog <- function(name = "timelog_for_ps_history.csv", wd = 'C:/R/works
     }
     #case 2: unknown PSMs
     ps_titles <- c("Senior Professional Services Manager", "Professional Services Manager")
-    timelog[timelog$User.Title %in% ps_titles & is.na(timelog$is_psm), ]$is_psm <- 1
+    if(length(timelog[timelog$User.Title %in% ps_titles & is.na(timelog$is_psm), ]$is_psm) > 0){
+      timelog[timelog$User.Title %in% ps_titles & is.na(timelog$is_psm), ]$is_psm <- 1
+    }
     
     #now all relevant time is marked, remove 0 and na time from timelog
     timelog <- timelog[timelog$is_psm == 1 & !is.na(timelog$is_psm), ]
