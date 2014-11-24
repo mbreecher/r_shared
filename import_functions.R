@@ -129,7 +129,13 @@ import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/w
     
     # logic to calculate filing period and reporting period
     services <- services[!is.na(services$Quarter.End), ] #remove services without quarter ends (can't place them)
-    services <- services[!(services$CS.PS %in% c('CS')),] #remove all CS services.
+    #remove CS migrations for PSH, but not general case
+    if(output %in% c("psh")){
+      services <- services[!(services$CS.PS %in% c('CS')),] #remove all CS services.
+    }else if(output %in% c("simple")){
+      services <- services[!(services$CS.PS %in% c('CS') & !(services$Service.Type %in% "Migration")),] #remove all CS services.
+    }
+    
     services <- services[!(services$Service.Type %in% c('Reserve Hours', 'Other', 'Training', '')), ] #Remove Reserve Projects
     
     #calculate filing deadline estimate for all projects
