@@ -213,7 +213,7 @@ import_sec <- function(name = "filing_data.csv" ){
   valid_list <- c("accession_number", "name", "cik", "sic", "form", "form_group", 
              "filing_date", "filing_qtr", "filing_month", "facts", "xbrl_software")
   facts <- facts[, names(facts) %in% valid_list]
-  facts <- facts[facts$xbrl_software %in% c("WebFilings"), ]
+  #facts <- facts[facts$xbrl_software %in% c("WebFilings"), ]
   #remove incomplete cases
   facts <- facts[complete.cases(facts),]
   #cast columns properly
