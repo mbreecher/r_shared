@@ -3,10 +3,10 @@ get_revenue_data <- function(){
   library(RMySQL)
   setwd("C:/R/workspace/shared")
   source("get_query.r")
-  
+  load("db_creds.Rdata")
   
   #grab project and collapsed time data from mysql database
-  con <- dbConnect(dbDriver("MySQL"), user = "root", password = "", dbname = "revenue_analysis")
+  con <- dbConnect(dbDriver("MySQL"), user = username, password = password, dbname = "revenue_analysis")
   
   sql <- paste("select subcloud.service_id, subcloud.list_price, subcloud.sales_price, subcloud.opportunity_id 
                from subcloud
@@ -39,5 +39,5 @@ get_revenue_data <- function(){
   result
 }
 
-setwd("C:/R/workspace/output")
-write.csv(result, file = "q22013_forward_projects_with_sales_price.csv", row.names = F, na = "")
+# setwd("C:/R/workspace/output")
+# write.csv(result, file = "q22013_forward_projects_with_sales_price.csv", row.names = F, na = "")
