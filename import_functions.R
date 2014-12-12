@@ -240,3 +240,26 @@ import_sales_recommendations <- function(name = "sales_recommendations_for_ps_hi
   }
   result
 }
+
+import_opportunities <- function(name = "opportunities_for_R.csv"){
+  setwd('C:/R/workspace/source')
+  opps <- read.csv(name, header = T, stringsAsFactors = F)
+  legacy_pricing <- read.csv("legacy_list_pricing.csv", header = T, stringsAsFactors = F)
+  opps$Close.Date <- as.Date(opps$Close.Date, format = "%m/%d/%Y")
+  
+  #update weird names
+  old <- c("List.Price..converted..Currency", "List.Price..converted.", "Sales.Price..converted..Currency", "Sales.Price..converted.", "Total.Price..converted..Currency", "Total.Price..converted.")
+  new <- c("List.Price.Currency", "List.Price", "Sales.Price.Currency", "Sales.Price", "Total.Price.Currency", "Total.Price")
+  for (i in 1:length(old)){
+    names(opps)[names(opps) %in% old[i]] <- new[i]    
+  }
+  #update legacy pricing
+  for (code in unique(legacy_pricing$Product.Code)){
+    if(dim(opps[opps$Product.Code %in% code & opps$Close.Date <- "2013-05-31",])[1] > 0){
+      opps[opps$Product.Code %in% code & opps$Close.Date <- "2013-05-31",]$List.Price <- as.numeric(legacy_pricing[legacy_pricing$Product.Code %in% code,]$List.Price)
+    }
+  }
+  opps$Sales.Price <- opps$Total.Price/opps$Quantity
+  opps
+}
+--
