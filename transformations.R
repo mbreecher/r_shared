@@ -4,10 +4,12 @@ collapsed_opps <- function(){
   source("transformations.r")
   
   opps <- import_opportunities()
-  time <- import_timelog()
-  svcs <- import_services()
+  collapsed_time <- collapsed_time()
   
-  result <- merge(svcs)
+  result <- merge(opps[!is.na(opps$Line.Item.18.Digit.Id) & !opps$Line.Item.18.Digit.Id %in% c(""),], 
+                  collapsed_time[,!names(collapsed_time) %in% names(opps)], 
+                  by.x = c("Line.Item.18.Digit.Id"), by.y = c("OpportunityLineItem.Id"))
+  result
   
 } 
 
@@ -23,7 +25,7 @@ collapsed_time <- function(){
   source("diy_periods.R")
   
   #import services and include customer status = none
-  services <- import_services(name = "services_for_ps_history_with_status_none.csv")
+  services <- import_services()
   timelog <- import_timelog()
   diy_time <- import_billable() 
   
@@ -42,7 +44,7 @@ collapsed_time <- function(){
   
   #I need customer period to merge diy time
   customer_period <- ddply(collapsed_history,
-                           .var = c("Services.ID", "CIK", "Account.Name", "filing.estimate", "Service.Name", "Service.Type", "Form.Type", "Quarter.End"),
+                           .var = c("Services.ID","OpportunityLineItem.Id", "CIK", "Account.Name", "filing.estimate", "Service.Name", "Service.Type", "Form.Type", "Quarter.End"),
                            .fun = function(x) {
                              
                              # Grab the year end from the services
