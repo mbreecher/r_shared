@@ -255,8 +255,8 @@ import_opportunities <- function(name = "opportunities_for_R.csv"){
   }
   #update legacy pricing
   for (code in unique(legacy_pricing$Product.Code)){
-    if(dim(opps[opps$Product.Code %in% code & opps$Close.Date <- "2013-05-31",])[1] > 0){
-      opps[opps$Product.Code %in% code & opps$Close.Date <- "2013-05-31",]$List.Price <- as.numeric(legacy_pricing[legacy_pricing$Product.Code %in% code,]$List.Price)
+    if(dim(opps[opps$Product.Code %in% code & opps$Close.Date <= "2013-05-31" & !is.na(opps$Close.Date),])[1] > 0){
+      opps[opps$Product.Code %in% code & opps$Close.Date <= "2013-05-31" & !is.na(opps$Close.Date),]$List.Price <- as.numeric(legacy_pricing[legacy_pricing$Product.Code %in% code,]$List.Price)
     }
   }
   opps$Sales.Price <- opps$Total.Price/opps$Quantity
