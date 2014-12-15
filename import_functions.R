@@ -108,7 +108,7 @@ import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/w
     services$Year.End <- format(services$Year.End, format = "%Y-%U")
     
     #build a lits of unique customers and customer data
-    base_info <- c("Account.Name", "CIK", "CSM", "Sr.CSM", "PSM", "Sr.PSM", "Churn.Date", "Year.End", "Goodwill.Hours.Available")
+    base_info <- c("Account.Name", "CIK", "CSM", "Sr.CSM", "PSM", "Sr.PSM", "Churn.Date", "Year.End", "XBRL.Status", "Goodwill.Hours.Available")
     #certain customer service lin items don't populate account info. We need to do that manually to prevent data duplication
     account_data <- services[,colnames(services) %in% base_info]
     account_data <- unique(account_data)
@@ -198,7 +198,7 @@ import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/w
     merged <- merged[order(merged$Account.Name), ]
     
 	if(output %in% c("psh")){
-		merged
+		merged[!(merged$XBRL.Status %in% c("None")),]
 	}else if(output %in% c("simple")){
 		services
 	}
