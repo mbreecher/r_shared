@@ -262,4 +262,3 @@ import_opportunities <- function(name = "opportunities_for_R.csv"){
   opps$Sales.Price <- opps$Total.Price/opps$Quantity
   opps
 }
---
