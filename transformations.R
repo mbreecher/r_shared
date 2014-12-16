@@ -135,7 +135,7 @@ weekly_time <- function(){
   
   timelog$logged_week_num <- week(timelog$Date)
   timelog$filing_week_num <- week(timelog$Filing.Date)
-  timelog$relative_week_num <- timelog$filing_week_num - timelog$logged_week_num
+  timelog$relative_week_num <- timelog$logged_week_num - timelog$filing_week_num
   
   result <- merge(timelog, services[,!names(services) %in% names(timelog)[!names(timelog) %in% c("Services.ID")]], by = c("Services.ID"))
 }
