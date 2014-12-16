@@ -119,3 +119,23 @@ collapsed_time <- function(){
 
   export
 }
+
+weekly_time <- function(){
+  library(reshape2)
+  library(plyr)
+  library(RecordLinkage)
+  
+  # Pull in import functions
+  setwd("C:/R/workspace/shared")
+  source("import_functions.R")
+  
+  #import services and include customer status = none
+  services <- import_services()
+  timelog <- import_timelog()
+  
+  timelog$logged_week_num <- week(timelog$Date)
+  timelog$filing_week_num <- week(timelog$Filing.Date)
+  timelog$relative_week_num <- timelog$filing_week_num - timelog$logged_week_num
+  
+  result <- merge(timelog, services[,!names(services) %in% names(timelog)[!names(timelog) %in% c("Services.ID")]], by = c("Services.ID"))
+}
