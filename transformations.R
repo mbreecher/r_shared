@@ -140,7 +140,7 @@ weekly_time <- function(){
   result <- merge(timelog, services[,!names(services) %in% names(timelog)[!names(timelog) %in% c("Services.ID")]], by = c("Services.ID"))
 }
 
-weekly_time_detail <- function{
+weekly_time_detail <- function(){
   library(plyr)
   library(RecordLinkage)
   
