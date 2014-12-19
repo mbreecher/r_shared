@@ -29,15 +29,15 @@ collapsed_time <- function(){
   timelog <- import_timelog()
   diy_time <- import_billable() 
   
-  #initial exclusions. pre-Q2 2012 time and in-progress or not started services
+  #initial exclusions. pre-Q2 2013 time and in-progress or not started services
   services <- services[services$Status %in% "Completed",]
-  timelog <- timelog[timelog$Date <= Sys.Date() & timelog$Date >= as.Date("2012-06-30"),]
+  timelog <- timelog[timelog$Date <= Sys.Date() & timelog$Date >= as.Date("2013-06-30"),]
   
   collapsed_time <- aggregate(Hours ~ Services.ID, FUN = sum, data = timelog)
   collapsed_history <- merge(services, collapsed_time, "Services.ID", all.x = T)
   
-  collapsed_history <- collapsed_history[collapsed_history$filing.estimate >= as.Date("2012-06-30"),]
-  
+  collapsed_history <- collapsed_history[collapsed_history$filing.estimate >= as.Date("2013-06-30"),]
+  collapsed_history
   
   pts <- proc.time()
   count.unique <- function(x) { length(unique(x[!is.na(x)])) } #function to count unique non-NA values
