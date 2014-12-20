@@ -22,49 +22,7 @@ timelog_with_status <- function(){
   timelog$xbrl_status <- ""
   timelog$xbrl_form <- ""
   timelog[timelog$Billable %in% 1,]$xbrl_status <- "DIY"
-  #for each service period, determine highest level of service and update status
   ptm <- proc.time()
-  for(i in 1:dim(unique(services[,names(services) %in% c("Account.Name", "Quarter.End", "filing.estimate")]))[1]){
-                      type <- "DIY"
-                      form <- ""
-                      current_types <- unique(services[services$Account.Name %in% unique(services[,names(services) %in% c("Account.Name", "Quarter.End", "filing.estimate")])[i,1] & 
-                                       services$Quarter.End %in% unique(services[,names(services) %in% c("Account.Name", "Quarter.End", "filing.estimate")])[i,2] &
-                                       services$filing.estimate %in% unique(services[,names(services) %in% c("Account.Name", "Quarter.End", "filing.estimate")])[i,3]
-                                       ,]$Service.Type)
-                      current_forms <- unique(services[services$Account.Name %in% unique(services[,names(services) %in% c("Account.Name", "Quarter.End", "filing.estimate")])[i,1] & 
-                                       services$Quarter.End %in% unique(services[,names(services) %in% c("Account.Name", "Quarter.End", "filing.estimate")])[i,2] &
-                                       services$filing.estimate %in% unique(services[,names(services) %in% c("Account.Name", "Quarter.End", "filing.estimate")])[i,3]
-                                     ,]$Form.Type)
-                      if(length(current_types) > 0){
-                        if(TRUE %in% (current_types %in% full_service_types)){
-                          type <- "Full Service"
-                        }else if(TRUE %in% (current_types %in% c("Maintenance"))){
-                          type <- "Basic"
-                        }
-                        if(TRUE %in% (current_forms %in% c("10-K", "K-K", "Q-K"))){
-                          form <- "K"
-                        }else if(TRUE %in% (current_forms %in% c("10-Q", "Q-Q", "K-Q"))){
-                          form <- "Q"
-                        }
-                        
-                      }
-          if(dim(timelog[timelog$Account.Name %in% unique(services[,names(services) %in% c("Account.Name", "Quarter.End", "filing.estimate")])[i,1] & 
-                           timelog$Date >= unique(services[,names(services) %in% c("Account.Name", "Quarter.End", "filing.estimate")])[i,2] &   
-                           timelog$Date <= unique(services[,names(services) %in% c("Account.Name", "Quarter.End", "filing.estimate")])[i,3] &
-                           !is.na(timelog$Date), ])[1]>0){
-            timelog[timelog$Account.Name %in% unique(services[,names(services) %in% c("Account.Name", "Quarter.End", "filing.estimate")])[i,1] & 
-                      timelog$Date >= unique(services[,names(services) %in% c("Account.Name", "Quarter.End", "filing.estimate")])[i,2] &   
-                      timelog$Date <= unique(services[,names(services) %in% c("Account.Name", "Quarter.End", "filing.estimate")])[i,3] &
-                      !is.na(timelog$Date), ]$xbrl_status <- type
-            timelog[timelog$Account.Name %in% unique(services[,names(services) %in% c("Account.Name", "Quarter.End", "filing.estimate")])[i,1] & 
-                      timelog$Date >= unique(services[,names(services) %in% c("Account.Name", "Quarter.End", "filing.estimate")])[i,2] &   
-                      timelog$Date <= unique(services[,names(services) %in% c("Account.Name", "Quarter.End", "filing.estimate")])[i,3] &
-                      !is.na(timelog$Date), ]$xbrl_form <- form
-          }
-          
-  }
-  proc.time() - ptm
-  
   service_status <- ddply(timelog, .var = c("Account.Name", "Date"), .fun = function(x){
                                     type <- "DIY"
                                     form <- ""
@@ -88,7 +46,17 @@ timelog_with_status <- function(){
                                       }else if(TRUE %in% (current_forms %in% c("10-Q", "Q-Q", "K-Q"))){
                                         form <- "Q"
                                       }
-                                      
+                                    }else{
+                                      if(TRUE %in% (x$Service.Type %in% full_service_types)){
+                                        type <- "Full Service"
+                                      }else if(TRUE %in% (x$Service.Type %in% c("Maintenance"))){
+                                        type <- "Basic"
+                                      }
+                                      if(TRUE %in% (x$Form.Type %in% c("10-K", "K-K", "Q-K"))){
+                                        form <- "K"
+                                      }else if(TRUE %in% (x$Form.Type %in% c("10-Q", "Q-Q", "K-Q"))){
+                                        form <- "Q"
+                                      }
                                     }
                                     
                                     data.frame(xbrl_status = type, form_type = form)
