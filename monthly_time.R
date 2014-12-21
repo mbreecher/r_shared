@@ -73,7 +73,7 @@ timelog_with_status <- function(){
   proc.time() - ptm
   
   export <- merge(timelog, service_status, by = c("Account.Name", "Date"))
-  export <- aggregate(Hours ~ monthyear +  xbrl_status + Billable + form_type, data = export, FUN = sum)
+  #export <- aggregate(Hours ~ monthyear +  xbrl_status + Billable + form_type, data = export, FUN = sum)
   
   export
 }
