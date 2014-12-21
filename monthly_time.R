@@ -19,13 +19,12 @@ timelog_with_status <- function(){
   
   full_service_types <- c("Standard Import","Full Service Roll Forward", "Roll Forward", "Detail Tagging", "Full Service Standard Import")
   
-  timelog$xbrl_status <- ""
-  timelog$xbrl_form <- ""
   timelog[timelog$Billable %in% 1,]$xbrl_status <- "DIY"
   ptm <- proc.time()
   service_status <- ddply(timelog, .var = c("Account.Name", "Date"), .fun = function(x){
                                     type <- "DIY"
                                     form <- ""
+                                    year_end <- NA
                                     current_types <- unique(services[services$Account.Name %in% unique(x$Account.Name) & 
                                                           services$Quarter.End <= unique(x$Date) &
                                                           services$filing.estimate >= unique(x$Date) &
@@ -42,9 +41,9 @@ timelog_with_status <- function(){
                                         type <- "Basic"
                                       }
                                       if(TRUE %in% (current_forms %in% c("10-K", "K-K", "Q-K"))){
-                                        form <- "K"
+                                        form <- c("K")
                                       }else if(TRUE %in% (current_forms %in% c("10-Q", "Q-Q", "K-Q"))){
-                                        form <- "Q"
+                                        form <- c("Q")
                                       }
                                     }else{
                                       if(TRUE %in% (x$Service.Type %in% full_service_types)){
@@ -53,9 +52,19 @@ timelog_with_status <- function(){
                                         type <- "Basic"
                                       }
                                       if(TRUE %in% (x$Form.Type %in% c("10-K", "K-K", "Q-K"))){
-                                        form <- "K"
+                                        form <- c("K")
                                       }else if(TRUE %in% (x$Form.Type %in% c("10-Q", "Q-Q", "K-Q"))){
-                                        form <- "Q"
+                                        form <- c("Q")
+                                      }
+                                    }
+                                    if(form %in% c("")){
+                                      if (length(unique(services[services$Account.Name %in% x$Account.Name & !(services$Year.End %in% c("     ")),]$Year.End)) > 0){
+                                            year_end <- as.Date(unique(services[services$Account.Name %in% x$Account.Name & !(services$Year.End %in% c("     ")),]$Year.End), format = "%m/%d")
+                                            form <- c("Q")
+                                             if(as.numeric(unique(x$Date) - year_end)%%365 >= 360 & as.numeric(unique(x$Date) - year_end)%%365 <= 95 & 
+                                                  !is.na(unique(x$Date)) & !is.na(year_end)){
+                                               form <- c("K")
+                                             }
                                       }
                                     }
                                     
@@ -64,7 +73,7 @@ timelog_with_status <- function(){
   proc.time() - ptm
   
   export <- merge(timelog, service_status, by = c("Account.Name", "Date"))
-  export <- aggregate(Hours ~ monthyear +  xbrl_status + Billable + , data = export, FUN = sum)
+  export <- aggregate(Hours ~ monthyear +  xbrl_status + Billable + form_type, data = export, FUN = sum)
   
   export
 }
