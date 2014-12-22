@@ -10,6 +10,10 @@ timelog_with_status <- function(){
   #import services and include customer status = none
   services <- import_services()
   timelog <- import_timelog()
+  setwd("C:/R/workspace/42/qa")
+  scraped_yed <- read.csv("scraped_yed.csv", header = F)
+  names(scraped_yed) <- c("CIK", "sec_name", "yed")
+  scraped_yed$yed <- as.Date(as.character(scraped_yed$yed), format = "%m-%d")
   
   #initial exclusions. pre-Q2 2013 time and in-progress or not started services
   services <- services[services$Status %in% "Completed",]
@@ -18,9 +22,7 @@ timelog_with_status <- function(){
   timelog$monthyear <- format(timelog$Date, format = "%y-%m")
   
   full_service_types <- c("Standard Import","Full Service Roll Forward", "Roll Forward", "Detail Tagging", "Full Service Standard Import")
-  
-  timelog$xbrl_status <- c("")
-  timelog[timelog$Billable %in% c("1"),]$xbrl_status <- c("DIY")
+
   ptm <- proc.time()
   service_status <- ddply(timelog, .var = c("Account.Name", "Date"), .fun = function(x){
                                     type <- "DIY"
@@ -67,6 +69,13 @@ timelog_with_status <- function(){
                                                   !is.na(unique(x$Date)) & !is.na(year_end)){
                                                form <- c("K")
                                              }
+                                      }else if(dim(scraped_yed[scraped_yed %in% x$CIK,])[1] > 0){
+                                            year_end <- scraped_yed[scraped_yed %in% x$CIK,]$yed
+                                            form <- c("Q")
+                                            if(as.numeric(unique(x$Date) - year_end)%%365 >= 360 & as.numeric(unique(x$Date) - year_end)%%365 <= 95 & 
+                                                 !is.na(unique(x$Date)) & !is.na(year_end)){
+                                              form <- c("K")
+                                            }
                                       }
                                     }
                                     
