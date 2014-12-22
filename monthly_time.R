@@ -19,7 +19,8 @@ timelog_with_status <- function(){
   
   full_service_types <- c("Standard Import","Full Service Roll Forward", "Roll Forward", "Detail Tagging", "Full Service Standard Import")
   
-  timelog[timelog$Billable %in% 1,]$xbrl_status <- "DIY"
+  timelog$xbrl_status <- c("")
+  timelog[timelog$Billable %in% c("1"),]$xbrl_status <- c("DIY")
   ptm <- proc.time()
   service_status <- ddply(timelog, .var = c("Account.Name", "Date"), .fun = function(x){
                                     type <- "DIY"
