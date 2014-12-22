@@ -59,7 +59,64 @@ import_timelog <- function(name = "timelog_for_ps_history.csv", wd = 'C:/R/works
     timelog$reportingPeriod <- ifelse(substr(timelog$filingPeriod, nchar(timelog$filingPeriod), nchar(timelog$filingPeriod)) == 1,
           paste(as.numeric(format(timelog$Date, "%Y")) -1, 4, sep = ""),
           paste(as.numeric(format(timelog$Date, "%Y")), ceiling(as.numeric(format(timelog$Date, "%m"))/3) - 1, sep = ""))
+
+    #****************************** import role dates
+    #get role dates
+    setwd("C:/R/workspace/source")
+    role_dates <- read.csv("ps_start_dates.csv", header = T, stringsAsFactors = F)
+    role_dates[,!(colnames(role_dates) %in% (c("Full.Name")))] <- 
+      lapply(role_dates[,!(colnames(role_dates) %in% (c("Full.Name")))],FUN = as.Date, format = "%m/%d/%Y")
     
+    #set all time to PSM when the title says psm or sr psm
+    timelog$role <- NA
+    timelog[timelog$User.Title %in% unique(timelog$User.Title)[grep("Professional", unique(timelog$User.Title))],]$role <- "PSM"
+    
+    #for those with a start date, set time before to NA
+    for (i in 1:length(role_dates[!is.na(role_dates$Start.Date),]$Full.Name)){
+      psm <- role_dates[!is.na(role_dates$Start.Date),]$Full.Name[i]
+      start <- role_dates[!is.na(role_dates$Start.Date),]$Start.Date[i]
+      if(length(timelog[timelog$User %in% psm & timelog$Date < start, ]$role) > 0){
+        timelog[timelog$User %in% psm & timelog$Date < start, ]$role <- NA
+      }
+    }
+    
+    #for psms promoted to senior, set time forward to Sr PSM
+    for (i in 1:length(role_dates[!is.na(role_dates$to_senior),]$Full.Name)){
+      psm <- role_dates[!is.na(role_dates$to_senior),]$Full.Name[i]
+      promotion_date <- role_dates[!is.na(role_dates$to_senior),]$to_senior[i]
+      if(length(timelog[timelog$User %in% psm & timelog$Date >= promotion_date, ]$role) > 0){
+        timelog[timelog$User %in% psm & timelog$Date >= promotion_date, ]$role <- "Sr PSM"
+      }
+    }
+    
+    #for srs promoted to tms, set time forward to TM
+    for (i in 1:length(role_dates[!is.na(role_dates$to_tm),]$Full.Name)){
+      psm <- role_dates[!is.na(role_dates$to_tm),]$Full.Name[i]
+      promotion_date <- role_dates[!is.na(role_dates$to_tm),]$to_tm[i]
+      if(length(timelog[timelog$User %in% psm & timelog$Date >= promotion_date, ]$role) > 0 ){
+        timelog[timelog$User %in% psm & timelog$Date >= promotion_date, ]$role <- "TM"
+      }
+    }
+    
+    #for tms promoted to director, set time forward to director
+    for (i in 1:length(role_dates[!is.na(role_dates$to_director),]$Full.Name)){
+      psm <- role_dates[!is.na(role_dates$to_director),]$Full.Name[i]
+      promotion_date <- role_dates[!is.na(role_dates$to_director),]$to_director[i]
+      if(length(timelog[timelog$User %in% psm & timelog$Date >= promotion_date, ]$role) > 0){
+        timelog[timelog$User %in% psm & timelog$Date >= promotion_date, ]$role <- "Director"
+      }
+    }
+    
+    #for psms who left PS, set time forward to NA
+    for (i in 1:length(role_dates[!is.na(role_dates$End.Date),]$Full.Name)){
+      psm <- role_dates[!is.na(role_dates$End.Date),]$Full.Name[i]
+      term_date <- role_dates[!is.na(role_dates$End.Date),]$End.Date[i]
+      if(length(timelog[timelog$User %in% psm & timelog$Date >= term_date, ]$role) > 0){
+        timelog[timelog$User %in% psm & timelog$Date >= term_date, ]$role <- NA
+      }
+    }
+    
+    #****************************** /import role dates
     
     #aggregate time by billable and non-billable
     time_billable <- aggregate(Hours ~ Account.Name + reportingPeriod + Billable, FUN = sum, data = timelog)

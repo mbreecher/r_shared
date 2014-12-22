@@ -25,6 +25,7 @@ timelog_with_status <- function(){
                                     type <- "DIY"
                                     form <- ""
                                     year_end <- NA
+                                    #for account-date set, carve out services whose 'filing window' would line up with this time
                                     current_types <- unique(services[services$Account.Name %in% unique(x$Account.Name) & 
                                                           services$Quarter.End <= unique(x$Date) &
                                                           services$filing.estimate >= unique(x$Date) &
