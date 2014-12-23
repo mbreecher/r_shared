@@ -15,6 +15,7 @@ timelog_with_status <- function(){
   missing_yed$CIK <- as.numeric(missing_yed$CIK)
   missing_yed$Year.End <- as.Date(missing_yed$Year.End, format = "%m/%d")
   missing_yed <- missing_yed[!is.na(missing_yed$Year.End),]
+  missing_yed <- unique(missing_yed)
   
   #initial exclusions. pre-Q2 2013 time and in-progress or not started services
   services <- services[services$Status %in% "Completed",]
