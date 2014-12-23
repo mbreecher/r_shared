@@ -12,6 +12,7 @@ timelog_with_status <- function(){
   timelog <- import_timelog()
   setwd("C:/R/workspace/source")
   missing_yed <- read.csv("accounts_with_year_end.csv", header = T, stringsAsFactors = F)
+  print(paste("accounts_with_year_end.csv", "last updated", difftime(Sys.time(), file.info("accounts_with_year_end.csv")$ctime, units = "days"), "days ago", sep = " "))
   missing_yed$CIK <- as.numeric(missing_yed$CIK)
   missing_yed$Year.End <- as.Date(missing_yed$Year.End, format = "%m/%d")
   missing_yed <- missing_yed[!is.na(missing_yed$Year.End),]
