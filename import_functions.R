@@ -6,6 +6,8 @@ import_timelog <- function(name = "timelog_for_ps_history.csv", wd = 'C:/R/works
     setwd(wd)
     timelog <- read.csv(name, header = T , stringsAsFactors=F)
     start_dates <- read.csv("ps_start_dates.csv", header = T , stringsAsFactors=F)
+    print(paste(name, "last updated", difftime(Sys.time(), file.info(name)$ctime, units = "days"), "days ago", sep = " "))
+    print(paste("ps_start_dates.csv", "last updated", difftime(Sys.time(), file.info("ps_start_dates.csv")$ctime, units = "days"), "days ago", sep = " "))
     
     #trim footer information by removing rows without a valid value for services ID
     timelog <- timelog[substr(timelog$Services.ID,0,3) %in% c("a01"), ]
@@ -146,6 +148,7 @@ import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/w
     ##import services report
     setwd(wd)
     services <- read.csv(name, header = T , stringsAsFactors=F)
+    print(paste(name, "last updated", difftime(Sys.time(), file.info(name)$ctime, units = "days"), "days ago", sep = " "))
     
     #trim footer information by removing rows without a valid value for services ID
     #services <- services[substr(services$Solution.Name,0,3) == "SEC"  & !is.na(services$Solution.Name), ] #Remove non-SEC solutions
@@ -254,6 +257,7 @@ import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/w
     merged <- merge(unique_customers, svc_by_qtr, by = "Account.Name", all.x = T)
     merged <- merged[order(merged$Account.Name), ]
     
+    
 	if(output %in% c("psh")){
 		merged[!(merged$XBRL.Status %in% c("None")),]
 	}else if(output %in% c("simple")){
@@ -265,6 +269,7 @@ import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/w
 import_sec <- function(name = "filing_data.csv" ){
   setwd('C:/R/workspace/source')
   facts <- read.csv(name, header = T , stringsAsFactors=F)
+  print(paste(name, "last updated", difftime(Sys.time(), file.info(name)$ctime, units = "days"), "days ago", sep = " "))
   
   #remove extra fields to remove potential for incomplete cases due to something extraneous
   valid_list <- c("accession_number", "name", "cik", "sic", "form", "form_group", 
@@ -278,6 +283,7 @@ import_sec <- function(name = "filing_data.csv" ){
   facts$facts <- as.numeric(facts$facts)
   facts <- facts[facts$form_group %in% c("tens", "amend"),]
   facts <- facts[rev(order(facts$filing_date)), ]
+  print(paste(name, "last updated", difftime(Sys.time(), file.info(name)$ctime, units = "days"), "days ago", sep = " "))
   facts
 }
 
@@ -295,6 +301,7 @@ import_sales_recommendations <- function(name = "sales_recommendations_for_ps_hi
        names(result)[grep('[1-9]+', names(result), perl = T)][i] <- 
          paste(names(result)[grep('[1-9]+', names(result), perl = T)][i] , "Sales Rec", collapse = "\n")
   }
+  print(paste(name, "last updated", difftime(Sys.time(), file.info(name)$ctime, units = "days"), "days ago", sep = " "))
   result
 }
 
@@ -317,5 +324,21 @@ import_opportunities <- function(name = "opportunities_for_R.csv"){
     }
   }
   opps$Sales.Price <- opps$Total.Price/opps$Quantity
+  print(paste(name, "last updated", difftime(Sys.time(), file.info(name)$ctime, units = "days"), "days ago", sep = " "))
   opps
+}
+
+import_contracts <- function(name = "contracts_for_pshistory.csv"){
+  setwd('C:/R/workspace/source')
+  contracts <- read.csv(name, header = T, stringsAsFactors = F)
+  contracts$Contract.Start.Date <- as.Date(contracts$Contract.Start.Date, format = "%m/%d/%Y")
+  contracts$CIK <- as.numeric(contracts$CIK)
+  print(paste(name, "last updated", difftime(Sys.time(), file.info(name)$ctime, units = "days"), "days ago", sep = " "))
+  contracts
+}
+
+import_hierarchy <- function(name = "hierarchy.csv"){
+  setwd('C:/R/workspace/source')
+  hierarchy <- read.csv(name, header = T, stringsAsFactors = F)
+  print(paste(name, "last updated", difftime(Sys.time(), file.info(name)$ctime, units = "days"), "days ago", sep = " "))
 }
