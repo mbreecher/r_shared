@@ -9,8 +9,8 @@ import_timelog <- function(name = "timelog_for_ps_history.csv", wd = 'C:/R/works
     start_dates <- read.csv("ps_start_dates.csv", header = T , stringsAsFactors=F)
     print(paste("ps_start_dates.csv", "last updated", round(difftime(Sys.time(), file.info("ps_start_dates.csv")$ctime, units = "days"), digits = 1), "days ago", sep = " "))
     
-    #trim footer information by removing rows without a valid value for services ID
-    timelog <- timelog[substr(timelog$Services.ID,0,3) %in% c("a01"), ]
+    #trim footer information
+    timelog <- timelog[1:(dim(timelog)[1] - 5),]
     
     #cleanup names and data values
     names(timelog)[names(timelog) %in% c("User..Full.Name")] <- "User"
@@ -151,8 +151,8 @@ import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/w
     services <- read.csv(name, header = T , stringsAsFactors=F)
     print(paste(name, "last updated", round(difftime(Sys.time(), file.info(name)$ctime, units = "days"), digits = 1), "days ago", sep = " "))
     
-    #trim footer information by removing rows without a valid value for services ID
-    #services <- services[substr(services$Solution.Name,0,3) == "SEC"  & !is.na(services$Solution.Name), ] #Remove non-SEC solutions
+    #trim footer information
+    services <- services[1:(dim(services)[1] - 5),]
     
     #cleanup names and data values
     names(services)[names(services) %in% c("Account..Account.Name")] <- "Account.Name"
@@ -290,6 +290,10 @@ import_sec <- function(name = "filing_data.csv" ){
 import_sales_recommendations <- function(name = "sales_recommendations_for_ps_history.csv" ){
   setwd('C:/R/workspace/source')
   sales_rec <- read.csv(name, header = T , stringsAsFactors=F)
+  
+  #trim footer information
+  sales_rec <- sales_rec[1:(dim(sales_rec)[1] - 5),]
+  
   print(paste(name, "last updated", round(difftime(Sys.time(), file.info(name)$ctime, units = "days"), digits = 1), "days ago", sep = " "))
   sales_rec$Service.QED <- as.Date(sales_rec$Service.QED, format = "%m/%d/%Y")
   sales_rec <- sales_rec[!is.na(sales_rec$Service.QED),]
@@ -308,6 +312,10 @@ import_sales_recommendations <- function(name = "sales_recommendations_for_ps_hi
 import_opportunities <- function(name = "opportunities_for_R.csv"){
   setwd('C:/R/workspace/source')
   opps <- read.csv(name, header = T, stringsAsFactors = F)
+  
+  #trim footer information
+  opps <- opps[1:(dim(opps)[1] - 5),]
+  
   print(paste(name, "last updated", round(difftime(Sys.time(), file.info(name)$ctime, units = "days"), digits = 1), "days ago", sep = " "))
   legacy_pricing <- read.csv("legacy_list_pricing.csv", header = T, stringsAsFactors = F)
   print(paste(legacy_list_pricing.csv, "last updated", round(difftime(Sys.time(), file.info(legacy_list_pricing.csv)$ctime, units = "days"), digits = 1), "days ago", sep = " "))
@@ -332,6 +340,8 @@ import_opportunities <- function(name = "opportunities_for_R.csv"){
 import_contracts <- function(name = "contracts_for_pshistory.csv"){
   setwd('C:/R/workspace/source')
   contracts <- read.csv(name, header = T, stringsAsFactors = F)
+  #trim footer information
+  contracts <- contracts[1:(dim(contracts)[1] - 5),]
   print(paste(name, "last updated", round(difftime(Sys.time(), file.info(name)$ctime, units = "days"), digits = 1), "days ago", sep = " "))
   contracts$Contract.Start.Date <- as.Date(contracts$Contract.Start.Date, format = "%m/%d/%Y")
   contracts$CIK <- as.numeric(contracts$CIK)
@@ -341,6 +351,8 @@ import_contracts <- function(name = "contracts_for_pshistory.csv"){
 import_hierarchy <- function(name = "hierarchy.csv"){
   setwd('C:/R/workspace/source')
   hierarchy <- read.csv(name, header = T, stringsAsFactors = F)
+  #trim footer information
+  hierarchy <- hierarchy[1:(dim(hierarchy)[1] - 5),]
   print(paste(name, "last updated", round(difftime(Sys.time(), file.info(name)$ctime, units = "days"), digits = 1), "days ago", sep = " "))
   hierarchy$CIK <- as.numeric(hierarchy$CIK)
   
