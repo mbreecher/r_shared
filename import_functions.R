@@ -343,4 +343,7 @@ import_hierarchy <- function(name = "hierarchy.csv"){
   setwd('C:/R/workspace/source')
   hierarchy <- read.csv(name, header = T, stringsAsFactors = F)
   print(paste(name, "last updated", difftime(Sys.time(), file.info(name)$ctime, units = "days"), "days ago", sep = " "))
+  hierarchy$CIK <- as.numeric(hierarchy$CIK)
+  
+  hierarchy
 }
