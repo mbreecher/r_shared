@@ -5,9 +5,9 @@ import_timelog <- function(name = "timelog_for_ps_history.csv", wd = 'C:/R/works
     #import and cleanup timelog
     setwd(wd)
     timelog <- read.csv(name, header = T , stringsAsFactors=F)
-    print(paste(name, "last updated", difftime(Sys.time(), file.info(name)$ctime, units = "days"), "days ago", sep = " "))
+    print(paste(name, "last updated", round(difftime(Sys.time(), file.info(name)$ctime, units = "days"), digits = 1), "days ago", sep = " "))
     start_dates <- read.csv("ps_start_dates.csv", header = T , stringsAsFactors=F)
-    print(paste("ps_start_dates.csv", "last updated", difftime(Sys.time(), file.info("ps_start_dates.csv")$ctime, units = "days"), "days ago", sep = " "))
+    print(paste("ps_start_dates.csv", "last updated", round(difftime(Sys.time(), file.info("ps_start_dates.csv")$ctime, units = "days"), digits = 1), "days ago", sep = " "))
     
     #trim footer information by removing rows without a valid value for services ID
     timelog <- timelog[substr(timelog$Services.ID,0,3) %in% c("a01"), ]
@@ -66,7 +66,7 @@ import_timelog <- function(name = "timelog_for_ps_history.csv", wd = 'C:/R/works
     #get role dates
     setwd("C:/R/workspace/source")
     role_dates <- read.csv("ps_start_dates.csv", header = T, stringsAsFactors = F)
-    print(paste("ps_start_dates.csv", "last updated", difftime(Sys.time(), file.info("ps_start_dates.csv")$ctime, units = "days"), "days ago", sep = " "))
+    print(paste("ps_start_dates.csv", "last updated", round(difftime(Sys.time(), file.info("ps_start_dates.csv")$ctime, units = "days"), digits = 1), "days ago", sep = " "))
     role_dates[,!(colnames(role_dates) %in% (c("Full.Name")))] <- 
       lapply(role_dates[,!(colnames(role_dates) %in% (c("Full.Name")))],FUN = as.Date, format = "%m/%d/%Y")
     
@@ -149,7 +149,7 @@ import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/w
     ##import services report
     setwd(wd)
     services <- read.csv(name, header = T , stringsAsFactors=F)
-    print(paste(name, "last updated", difftime(Sys.time(), file.info(name)$ctime, units = "days"), "days ago", sep = " "))
+    print(paste(name, "last updated", round(difftime(Sys.time(), file.info(name)$ctime, units = "days"), digits = 1), "days ago", sep = " "))
     
     #trim footer information by removing rows without a valid value for services ID
     #services <- services[substr(services$Solution.Name,0,3) == "SEC"  & !is.na(services$Solution.Name), ] #Remove non-SEC solutions
@@ -270,7 +270,7 @@ import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/w
 import_sec <- function(name = "filing_data.csv" ){
   setwd('C:/R/workspace/source')
   facts <- read.csv(name, header = T , stringsAsFactors=F)
-  print(paste(name, "last updated", difftime(Sys.time(), file.info(name)$ctime, units = "days"), "days ago", sep = " "))
+  print(paste(name, "last updated", round(difftime(Sys.time(), file.info(name)$ctime, units = "days"), digits = 1), "days ago", sep = " "))
   
   #remove extra fields to remove potential for incomplete cases due to something extraneous
   valid_list <- c("accession_number", "name", "cik", "sic", "form", "form_group", 
@@ -284,14 +284,13 @@ import_sec <- function(name = "filing_data.csv" ){
   facts$facts <- as.numeric(facts$facts)
   facts <- facts[facts$form_group %in% c("tens", "amend"),]
   facts <- facts[rev(order(facts$filing_date)), ]
-  print(paste(name, "last updated", difftime(Sys.time(), file.info(name)$ctime, units = "days"), "days ago", sep = " "))
   facts
 }
 
 import_sales_recommendations <- function(name = "sales_recommendations_for_ps_history.csv" ){
   setwd('C:/R/workspace/source')
   sales_rec <- read.csv(name, header = T , stringsAsFactors=F)
-  print(paste(name, "last updated", difftime(Sys.time(), file.info(name)$ctime, units = "days"), "days ago", sep = " "))
+  print(paste(name, "last updated", round(difftime(Sys.time(), file.info(name)$ctime, units = "days"), digits = 1), "days ago", sep = " "))
   sales_rec$Service.QED <- as.Date(sales_rec$Service.QED, format = "%m/%d/%Y")
   sales_rec <- sales_rec[!is.na(sales_rec$Service.QED),]
   sales_rec$period <- paste(as.numeric(format(sales_rec$Service.QED, "%Y")), ceiling(as.numeric(format(sales_rec$Service.QED, "%m"))/3) , sep = "")
@@ -309,9 +308,9 @@ import_sales_recommendations <- function(name = "sales_recommendations_for_ps_hi
 import_opportunities <- function(name = "opportunities_for_R.csv"){
   setwd('C:/R/workspace/source')
   opps <- read.csv(name, header = T, stringsAsFactors = F)
-  print(paste(name, "last updated", difftime(Sys.time(), file.info(name)$ctime, units = "days"), "days ago", sep = " "))
+  print(paste(name, "last updated", round(difftime(Sys.time(), file.info(name)$ctime, units = "days"), digits = 1), "days ago", sep = " "))
   legacy_pricing <- read.csv("legacy_list_pricing.csv", header = T, stringsAsFactors = F)
-  print(paste(legacy_list_pricing.csv, "last updated", difftime(Sys.time(), file.info(legacy_list_pricing.csv)$ctime, units = "days"), "days ago", sep = " "))
+  print(paste(legacy_list_pricing.csv, "last updated", round(difftime(Sys.time(), file.info(legacy_list_pricing.csv)$ctime, units = "days"), digits = 1), "days ago", sep = " "))
   opps$Close.Date <- as.Date(opps$Close.Date, format = "%m/%d/%Y")
   
   #update weird names
@@ -333,7 +332,7 @@ import_opportunities <- function(name = "opportunities_for_R.csv"){
 import_contracts <- function(name = "contracts_for_pshistory.csv"){
   setwd('C:/R/workspace/source')
   contracts <- read.csv(name, header = T, stringsAsFactors = F)
-  print(paste(name, "last updated", difftime(Sys.time(), file.info(name)$ctime, units = "days"), "days ago", sep = " "))
+  print(paste(name, "last updated", round(difftime(Sys.time(), file.info(name)$ctime, units = "days"), digits = 1), "days ago", sep = " "))
   contracts$Contract.Start.Date <- as.Date(contracts$Contract.Start.Date, format = "%m/%d/%Y")
   contracts$CIK <- as.numeric(contracts$CIK)
   contracts
@@ -342,7 +341,7 @@ import_contracts <- function(name = "contracts_for_pshistory.csv"){
 import_hierarchy <- function(name = "hierarchy.csv"){
   setwd('C:/R/workspace/source')
   hierarchy <- read.csv(name, header = T, stringsAsFactors = F)
-  print(paste(name, "last updated", difftime(Sys.time(), file.info(name)$ctime, units = "days"), "days ago", sep = " "))
+  print(paste(name, "last updated", round(difftime(Sys.time(), file.info(name)$ctime, units = "days"), digits = 1), "days ago", sep = " "))
   hierarchy$CIK <- as.numeric(hierarchy$CIK)
   
   hierarchy
