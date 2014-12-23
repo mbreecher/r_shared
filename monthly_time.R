@@ -10,10 +10,11 @@ timelog_with_status <- function(){
   #import services and include customer status = none
   services <- import_services()
   timelog <- import_timelog()
-  setwd("C:/R/workspace/42/qa")
-  scraped_yed <- read.csv("scraped_yed.csv", header = F)
-  names(scraped_yed) <- c("CIK", "sec_name", "yed")
-  scraped_yed$yed <- as.Date(as.character(scraped_yed$yed), format = "%m-%d")
+  setwd("C:/R/workspace/source")
+  missing_yed <- read.csv("accounts_with_year_end.csv", header = T, stringsAsFactors = F)
+  missing_yed$CIK <- as.numeric(missing_yed$CIK)
+  missing_yed$Year.End <- as.Date(missing_yed$Year.End, format = "%m/%d")
+  missing_yed <- missing_yed[!is.na(missing_yed$Year.End),]
   
   #initial exclusions. pre-Q2 2013 time and in-progress or not started services
   services <- services[services$Status %in% "Completed",]
@@ -69,8 +70,8 @@ timelog_with_status <- function(){
                                                   !is.na(unique(x$Date)) & !is.na(year_end)){
                                                form <- c("K")
                                              }
-                                      }else if(dim(scraped_yed[scraped_yed %in% x$CIK,])[1] > 0){
-                                            year_end <- scraped_yed[scraped_yed %in% x$CIK,]$yed
+                                      }else if(dim(missing_yed[missing_yed$CIK %in% x$CIK,])[1] > 0){
+                                            year_end <- missing_yed[missing_yed$CIK %in% x$CIK,]$Year.End
                                             form <- c("Q")
                                             if(as.numeric(unique(x$Date) - year_end)%%365 >= 360 & as.numeric(unique(x$Date) - year_end)%%365 <= 95 & 
                                                  !is.na(unique(x$Date)) & !is.na(year_end)){
