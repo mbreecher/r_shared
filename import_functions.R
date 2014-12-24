@@ -247,6 +247,7 @@ import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/w
     services$reportingPeriod <- ifelse(substr(services$filingPeriod, nchar(services$filingPeriod), nchar(services$filingPeriod)) == 1,
                                       paste(as.numeric(format(services$filing.estimate, "%Y")) -1, 4, sep = ""),
                                       paste(as.numeric(format(services$filing.estimate, "%Y")), ceiling(as.numeric(format(services$filing.estimate, "%m"))/3) - 1, sep = ""))
+    services$CIK <- as.numeric(services$CIK)
     
     svc_by_qtr <- aggregate(services$Service.Name, by=list(services$Account.Name, services$reportingPeriod), paste, collapse = "\n")
     names(svc_by_qtr) <- c("Account.Name", "reportingPeriod", "Services")
