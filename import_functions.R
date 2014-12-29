@@ -378,7 +378,7 @@ import_opportunities <- function(name = "opportunities_for_R.csv"){
   
   print(paste(name, "last updated", round(difftime(Sys.time(), file.info(name)$ctime, units = "days"), digits = 1), "days ago", sep = " "))
   legacy_pricing <- read.csv("legacy_list_pricing.csv", header = T, stringsAsFactors = F)
-  print(paste(legacy_list_pricing.csv, "last updated", round(difftime(Sys.time(), file.info(legacy_list_pricing.csv)$ctime, units = "days"), digits = 1), "days ago", sep = " "))
+  print(paste("legacy_list_pricing.csv", "last updated", round(difftime(Sys.time(), file.info("legacy_list_pricing.csv")$ctime, units = "days"), digits = 1), "days ago", sep = " "))
   opps$Close.Date <- as.Date(opps$Close.Date, format = "%m/%d/%Y")
   
   #update weird names
