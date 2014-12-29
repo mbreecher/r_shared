@@ -196,7 +196,7 @@ import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/w
     #remove CS migrations for PSH, but not general case
     if(output %in% c("psh")){
       services <- services[!(services$CS.PS %in% c('CS')),] #remove all CS services.
-    }else if(output %in% c("simple")){
+    }else if(output %in% c("simple", "expanded")){
       services <- services[!(services$CS.PS %in% c('CS') & !(services$Service.Type %in% "Migration")),] #remove all CS services.
     }
     
@@ -257,7 +257,7 @@ import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/w
       #need to use services b/c that includes all contracts
       contracts <- import_contracts() #info for the start date
       hierarchy <- import_hierarchy() #info for related accounts
-      parents <- ddply(hierarchy, .(Parent.Account), summarise, Parent.CIK = hierarchy[hierarchy$Account.Name %in% Parent.Account, ]$CIK)
+      parents <- ddply(hierarchy, .(Parent.Account), summarise, Parent.CIK = unique(hierarchy[hierarchy$Account.Name %in% Parent.Account, ]$CIK))
       hierarchy <- merge(hierarchy, parents, by = c("Parent.Account"), all.x = T)
       
       #start by adding parent and parent cik to services
