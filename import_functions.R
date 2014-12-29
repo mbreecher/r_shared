@@ -248,7 +248,6 @@ import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/w
                                       paste(as.numeric(format(services$filing.estimate, "%Y")) -1, 4, sep = ""),
                                       paste(as.numeric(format(services$filing.estimate, "%Y")), ceiling(as.numeric(format(services$filing.estimate, "%m"))/3) - 1, sep = ""))
     services$CIK <- as.numeric(services$CIK)
-    
     #******************** expanded services
     #need to use services b/c that includes all contracts
     contracts <- import_contracts() #info for the start date
@@ -295,6 +294,7 @@ import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/w
     } )
     services <- merge(expanded_services, contract_start, by = c("Account.Name", "CIK"), all.x = T)
     #*********************************** end expanded services
+    services$Churn.Date <- as.Date(services$Churn.Date, format = "%m/%d/%Y")
     
     svc_by_qtr <- aggregate(services$Service.Name, by=list(services$Account.Name, services$reportingPeriod), paste, collapse = "\n")
     names(svc_by_qtr) <- c("Account.Name", "reportingPeriod", "Services")
