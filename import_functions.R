@@ -151,6 +151,9 @@ import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/w
     services <- read.csv(name, header = T , stringsAsFactors=F)
     print(paste(name, "last updated", round(difftime(Sys.time(), file.info(name)$ctime, units = "days"), digits = 1), "days ago", sep = " "))
     
+    setwd("C:/R/workspace/shared")
+    source("import_functions.r")
+    
     #trim footer information
     services <- services[1:(dim(services)[1] - 5),]
     
@@ -248,53 +251,62 @@ import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/w
                                       paste(as.numeric(format(services$filing.estimate, "%Y")) -1, 4, sep = ""),
                                       paste(as.numeric(format(services$filing.estimate, "%Y")), ceiling(as.numeric(format(services$filing.estimate, "%m"))/3) - 1, sep = ""))
     services$CIK <- as.numeric(services$CIK)
-    #******************** expanded services
-    #need to use services b/c that includes all contracts
-    contracts <- import_contracts() #info for the start date
-    hierarchy <- import_hierarchy() #info for related accounts and 
-    
-    parents <- ddply(hierarchy, .(Parent.Account), summarise, Parent.CIK = hierarchy[hierarchy$Account.Name %in% Parent.Account, ]$CIK)
-    hierarchy <- merge(hierarchy, parents, by = c("Parent.Account"), all.x = T)
-    
-    #start by adding parent and parent cik to services
-    parent_info <- ddply(services, .var = c("Account.Name", "CIK"), .fun = function(x){
-      if(length(hierarchy[hierarchy$Account.Name %in% x$Account.Name | hierarchy$CIK %in% x$CIK | hierarchy$Parent.Account %in% x$Account.Name, ]$Parent.Account) > 0){
-        data.frame(parent = hierarchy[hierarchy$Account.Name %in% x$Account.Name | hierarchy$CIK %in% x$CIK |hierarchy$Parent.Account %in% x$Account.Name, ]$Parent.Account,
-                   parent.cik = hierarchy[hierarchy$Account.Name %in% x$Account.Name | hierarchy$CIK %in% x$CIK |hierarchy$Parent.Account %in% x$Account.Name, ]$Parent.CIK
-        )
-      }else{
-        data.frame(parent = "",
-                   parent.cik = 0
-        )
-      }
-    })
-    expanded_services <- merge(services, parent_info, by = c("Account.Name", "CIK"), all.x = T)
-    
-    #try to replace missing parent.CIKs in expanded services.
-    missing_parent_ciks <- ddply(expanded_services[expanded_services$parent.cik %in% "0" | is.na(expanded_services$parent.cik),],
-                                 .var = c("parent"), .fun = function(x){
-                                   if(length(expanded_services[expanded_services$Account.Name %in% x$parent,]$CIK) > 0){
-                                     data.frame(parent.cik.updated = expanded_services[expanded_services$Account.Name %in% x$parent,]$CIK)
-                                   }else{
-                                     data.frame(parent.cik.updated = 0)
-                                   }
-                                 })
-    expanded_services <- merge(expanded_services, missing_parent_ciks, by = c("parent"), all.x = T)
-    
-    #then, we need to look for contract start dates using a cascade of info: account, cik, parent, parent cik
-    contract_start <- ddply(services, .var = c("Account.Name", "CIK"), .fun = function(x){
-      #prefer account name and cik
-      if(length(contracts[contracts$Account.Name %in% x$Account.Name | contracts$CIK %in% x$CIK,]$Contract.Start.Date) > 0 ){
-        data.frame(contract.start.date = min(contracts[contracts$Account.Name %in% x$Account.Name | contracts$CIK %in% x$CIK,]$Contract.Start.Date))
-      }else if(length(contracts[contracts$Account.Name %in% x$parent | contracts$CIK %in% x$parent.cik | contracts$CIK %in% x$parent.cik.updated,]$Contract.Start.Date) > 0 ){
-        data.frame(contract.start.date = min(contracts[contracts$Account.Name %in% x$parent | contracts$CIK %in% x$parent.cik | contracts$CIK %in% x$parent.cik.updated,]$Contract.Start.Date))
-      }else{
-        data.frame(contract.start.date = NA)
-      }
-    } )
-    services <- merge(expanded_services, contract_start, by = c("Account.Name", "CIK"), all.x = T)
-    #*********************************** end expanded services
     services$Churn.Date <- as.Date(services$Churn.Date, format = "%m/%d/%Y")
+    #******************** expanded services 
+    if(output %in% c("expanded")){
+      #need to use services b/c that includes all contracts
+      contracts <- import_contracts() #info for the start date
+      hierarchy <- import_hierarchy() #info for related accounts
+      parents <- ddply(hierarchy, .(Parent.Account), summarise, Parent.CIK = hierarchy[hierarchy$Account.Name %in% Parent.Account, ]$CIK)
+      hierarchy <- merge(hierarchy, parents, by = c("Parent.Account"), all.x = T)
+      
+      #start by adding parent and parent cik to services
+      parent_info <- ddply(services, .var = c("Account.Name", "CIK"), .fun = function(x){
+        if(length(unique(hierarchy[hierarchy$Account.Name %in% x$Account.Name, ]$Parent.Account)) == 1){
+          data.frame(parent = unique(hierarchy[hierarchy$Account.Name %in% x$Account.Name, ]$Parent.Account),
+                     parent.cik = unique(hierarchy[hierarchy$Account.Name %in% x$Account.Name, ]$Parent.CIK)
+          )
+        }else if(length(unique(hierarchy[hierarchy$CIK %in% x$CIK, ]$Parent.Account)) == 1){
+          data.frame(parent = unique(hierarchy[hierarchy$CIK %in% x$CIK, ]$Parent.Account),
+                     parent.cik = unique(hierarchy[hierarchy$CIK %in% x$CIK, ]$Parent.CIK))
+        }else if(length(unique(hierarchy[hierarchy$Parent.Account %in% x$Account.Name, ]$Parent.Account)) == 1){
+          data.frame(parent = unique(hierarchy[hierarchy$Parent.Account %in% x$Account.Name, ]$Parent.Account),
+                     parent.cik = unique(hierarchy[hierarchy$Parent.Account %in% x$Account.Name, ]$Parent.CIK))
+        }
+        else{
+          data.frame(parent = "",
+                     parent.cik = 0
+          )
+        }
+      })
+      expanded_services <- merge(services, parent_info, by = c("Account.Name", "CIK"), all.x = T, all.y = F)
+      
+      #try to replace missing parent.CIKs in expanded services.
+      missing_parent_ciks <- ddply(expanded_services[expanded_services$parent.cik %in% "0" | is.na(expanded_services$parent.cik),],
+                                   .var = c("parent"), .fun = function(x){
+                                     if(length(expanded_services[expanded_services$Account.Name %in% x$parent,]$CIK) == 0){
+                                       data.frame(parent.cik.updated = unique(expanded_services[expanded_services$Account.Name %in% x$parent,]$CIK))
+                                     }else{
+                                       data.frame(parent.cik.updated = 0)
+                                     }
+                                   })
+      expanded_services <- merge(expanded_services, missing_parent_ciks, by = c("parent"), all.x = T)
+      
+      #then, we need to look for contract start dates using a cascade of info: account, cik, parent, parent cik
+      contract_start <- ddply(services, .var = c("Account.Name", "CIK"), .fun = function(x){
+        #prefer account name and cik
+        if(length(contracts[contracts$Account.Name %in% x$Account.Name | contracts$CIK %in% x$CIK,]$Contract.Start.Date) > 0 ){
+          data.frame(contract.start.date = min(contracts[contracts$Account.Name %in% x$Account.Name | contracts$CIK %in% x$CIK,]$Contract.Start.Date))
+        }else if(length(contracts[contracts$Account.Name %in% x$parent | contracts$CIK %in% x$parent.cik | contracts$CIK %in% x$parent.cik.updated,]$Contract.Start.Date) > 0 ){
+          data.frame(contract.start.date = min(contracts[contracts$Account.Name %in% x$parent | contracts$CIK %in% x$parent.cik | contracts$CIK %in% x$parent.cik.updated,]$Contract.Start.Date))
+        }else{
+          data.frame(contract.start.date = NA)
+        }
+      } )
+      services <- merge(expanded_services, contract_start, by = c("Account.Name", "CIK"), all.x = T)
+    }
+    #*********************************** end expanded services
+    
     
     svc_by_qtr <- aggregate(services$Service.Name, by=list(services$Account.Name, services$reportingPeriod), paste, collapse = "\n")
     names(svc_by_qtr) <- c("Account.Name", "reportingPeriod", "Services")
@@ -309,7 +321,7 @@ import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/w
     
 	if(output %in% c("psh")){
 		merged[!(merged$XBRL.Status %in% c("None")),]
-	}else if(output %in% c("simple")){
+	}else if(output %in% c("simple", "expanded")){
 		services
 	}
     
