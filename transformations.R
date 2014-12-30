@@ -17,8 +17,8 @@ collapsed_opps <- function(){
   check <- c()
   for (id in unique(price_update$Services.ID)){
     if(length(result[result$Services.ID %in% id,]$Services.ID) > 0){
-      result[result$Services.ID %in% id,]$list_price <- price_update[price_update$Services.ID %in% id,]$list_price_updated
-      result[result$Services.ID %in% id,]$sales_price <- price_update[price_update$Services.ID %in% id,]$sales_price_updated 
+      result[result$Services.ID %in% id,]$List.Price <- price_update[price_update$Services.ID %in% id,]$list_price_updated
+      result[result$Services.ID %in% id,]$Sales.Price <- price_update[price_update$Services.ID %in% id,]$sales_price_updated 
     }
   }
   
