@@ -13,6 +13,7 @@ collapsed_opps <- function(){
   #temp abigail changes
   setwd("C:/R/workspace/Ali")
   price_update <- read.csv("abigail_price_updates.csv", header = T, stringsAsFactors = F)
+  print(paste("abigail_price_updates.csv", "last updated", round(difftime(Sys.time(), file.info("abigail_price_updates.csv")$ctime, units = "days"), digits = 1), "days ago", sep = " "))
   check <- c()
   for (id in unique(price_update$Services.ID)){
     if(length(result[result$Services.ID %in% id,]$Services.ID) > 0){
