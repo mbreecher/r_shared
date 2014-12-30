@@ -22,6 +22,8 @@ collapsed_opportunities <- function(){
     }
   }
   
+  result$monthyear <- format(result$filing.estimate, format = "%y-%m")
+  
   result
   
 } 
