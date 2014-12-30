@@ -1,4 +1,4 @@
-collapsed_opps <- function(){
+collapsed_opportunities <- function(){
   setwd("C:/R/workspace/shared")
   source("import_functions.r")
   source("transformations.r")
