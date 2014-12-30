@@ -9,6 +9,18 @@ collapsed_opps <- function(){
   result <- merge(opps[!is.na(opps$Line.Item.18.Digit.Id) & !opps$Line.Item.18.Digit.Id %in% c(""),], 
                   collapsed_time[,!names(collapsed_time) %in% names(opps)], 
                   by.x = c("Line.Item.18.Digit.Id"), by.y = c("OpportunityLineItem.Id"))
+  
+  #temp abigail changes
+  setwd("C:/R/workspace/Ali")
+  price_update <- read.csv("abigail_price_updates.csv", header = T, stringsAsFactors = F)
+  check <- c()
+  for (id in unique(price_update$Services.ID)){
+    if(length(result[result$Services.ID %in% id,]$Services.ID) > 0){
+      result[result$Services.ID %in% id,]$list_price <- price_update[price_update$Services.ID %in% id,]$list_price_updated
+      result[result$Services.ID %in% id,]$sales_price <- price_update[price_update$Services.ID %in% id,]$sales_price_updated 
+    }
+  }
+  
   result
   
 } 
