@@ -60,6 +60,8 @@ timelog_with_status <- function(){
                                           year_end <- as.Date(unique(services[services$Account.Name %in% x$Account.Name & !(services$Year.End %in% c("     ")),]$Year.End), format = "%m/%d")
                                     }else if(dim(missing_yed[missing_yed$CIK %in% x$CIK,])[1] > 0){
                                           year_end <- as.Date(missing_yed[missing_yed$CIK %in% x$CIK,]$Year.End, format = "%m/%d")
+                                    }else{
+                                      year_end <- as.Date("12/31", format = "%m/%d")
                                     }
                                     if((as.numeric(unique(x$Date) - year_end)%%365 >= 360 | as.numeric(unique(x$Date) - year_end)%%365 <= 95) & 
                                          !is.na(unique(x$Date)) & !is.na(year_end)){
