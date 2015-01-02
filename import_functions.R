@@ -1,7 +1,7 @@
 #I wanted to separate import and cleanup functions to minimize the noise in the aggregation
 
 
-import_timelog <- function(name = "timelog_for_ps_history.csv", wd = 'C:/R/workspace/source', output = 'simple'){
+import_timelog <- function(name = "timelog_for_R.csv", wd = 'C:/R/workspace/source', output = 'simple'){
     #import and cleanup timelog
     setwd(wd)
     timelog <- read.csv(name, header = T , stringsAsFactors=F)
