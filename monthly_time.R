@@ -28,7 +28,7 @@ timelog_with_status <- function(){
 
   ptm <- proc.time()
   #for each unique date time was logged to a unique customer
-  service_status <- ddply(timelog[1:100,], .var = c("Account.Name", "Date"), .fun = function(x){
+  service_status <- ddply(timelog, .var = c("Account.Name", "Date"), .fun = function(x){
                                     type <- "DIY"
                                     form <- ""
                                     year_end <- NA
@@ -42,10 +42,10 @@ timelog_with_status <- function(){
                                                                        services$filing.estimate >= unique(x$Date) &
                                                                        !is.na(unique(x$Date)),]$Form.Type)
                                     
-                                    if(length(current_types) > 0){
-                                      if(TRUE %in% (current_types %in% full_service_types)){
+                                    if(length(current_services) > 0){
+                                      if(TRUE %in% (current_services %in% full_service_types)){
                                         type <- "Full Service"
-                                      }else if(TRUE %in% (current_types %in% c("Maintenance"))){
+                                      }else if(TRUE %in% (current_services %in% c("Maintenance"))){
                                         type <- "Basic"
                                       }
                                       if(TRUE %in% (current_forms %in% c("10-K", "K-K", "Q-K"))){
@@ -67,23 +67,24 @@ timelog_with_status <- function(){
                                     }
                                     if(form %in% c("")){
                                       if (length(unique(services[services$Account.Name %in% x$Account.Name & !(services$Year.End %in% c("     ")),]$Year.End)) > 0){
-                                        year_end <- as.Date(unique(services[services$Account.Name %in% x$Account.Name & !(services$Year.End %in% c("     ")),]$Year.End), format = "%m/%d")
+                                        year_end <- as.Date(min(unique(services[services$Account.Name %in% x$Account.Name & !(services$Year.End %in% c("     ")),]$Year.End)), format = "%m/%d")
                                         form <- c("Q")
-                                        if(as.numeric(unique(x$Date) - year_end)%%365 >= 360 & as.numeric(unique(x$Date) - year_end)%%365 <= 95 & 
-                                             !is.na(unique(x$Date)) & !is.na(year_end)){
+                                        if((as.numeric(unique(x$Date) - unique(year_end))%%365 >= 360 | as.numeric(unique(x$Date) - unique(year_end))%%365 <= 95) & 
+                                             !is.na(unique(x$Date)) & !is.na(unique(year_end))){
                                           form <- c("K")
                                         }
                                       }else if(dim(missing_yed[missing_yed$CIK %in% x$CIK,])[1] > 0){
-                                        year_end <- missing_yed[missing_yed$CIK %in% x$CIK,]$Year.End
+                                        year_end <- min(missing_yed[missing_yed$CIK %in% x$CIK,]$Year.End)
                                         form <- c("Q")
-                                        if(as.numeric(unique(x$Date) - year_end)%%365 >= 360 & as.numeric(unique(x$Date) - year_end)%%365 <= 95 & 
-                                             !is.na(unique(x$Date)) & !is.na(year_end)){
+                                        if((as.numeric(unique(x$Date) - unique(year_end))%%365 >= 360 | as.numeric(unique(x$Date) - unique(year_end))%%365 <= 95) & 
+                                             !is.na(unique(x$Date)) & !is.na(unique(year_end))){
                                           form <- c("K")
                                         }
                                       }
                                     }
+                                    if(length(unique(year_end)) > 1){browser()}
                                     
-                                    data.frame(xbrl_status = type, form_type = form, year_end = as.Date(year_end), calc = as.numeric(unique(x$Date) - year_end)%%365)
+                                    data.frame(xbrl_status = type, form_type = form, year_end = as.Date(unique(year_end)), calc = as.numeric(unique(x$Date) - year_end)%%365)
                                 })
   proc.time() - ptm
   
