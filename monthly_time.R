@@ -20,7 +20,7 @@ timelog_with_status <- function(){
   
   #initial exclusions. pre-Q2 2013 time and in-progress or not started services
   services <- services[services$Status %in% "Completed",]
-  timelog <- timelog[timelog$Date <= Sys.Date() & timelog$Date >= as.Date("2013-06-30"),]
+  timelog <- timelog[timelog$Date <= Sys.Date() & timelog$Date > as.Date("2013-06-30"),]
   
   timelog$monthyear <- format(timelog$Date, format = "%y-%m")
   
