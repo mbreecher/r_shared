@@ -26,7 +26,6 @@ timelog_with_status <- function(){
   
   full_service_types <- c("Standard Import","Full Service Roll Forward", "Roll Forward", "Detail Tagging", "Full Service Standard Import")
 
-  ptm <- proc.time()
   year_end_df <- ddply(timelog, .var = c("Account.Name"), .fun = function(x){ # 23.69 seconds
     year_end <- NA
     if (length(unique(services[services$Account.Name %in% x$Account.Name & !(services$Year.End %in% c("     ")),]$Year.End)) > 0){
@@ -75,7 +74,6 @@ timelog_with_status <- function(){
   export$form_type <- "Q"
   export$calc <- as.numeric(export$Date - export$year_end)%%365
   export[(export$calc >= 360 | export$calc <= 95) & !is.na(export$calc),]$form_type <- "K"
-  print (proc.time() - ptm)
   
   export <- merge(timelog, service_status, by = c("Account.Name", "Date"))
   #export <- aggregate(Hours ~ monthyear +  xbrl_status + Billable + form_type, data = export, FUN = sum)

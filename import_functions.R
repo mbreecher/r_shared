@@ -124,17 +124,19 @@ import_timelog <- function(name = "timelog_for_R.csv", wd = 'C:/R/workspace/sour
     #aggregate time by billable and non-billable
     time_billable <- aggregate(Hours ~ Account.Name + reportingPeriod + Billable, FUN = sum, data = timelog)
     names(time_billable) <- c("Account.Name", "reportingPeriod", "Billable", "Hours") #change names to something meaningful
-    time_billable[time_billable$Billable == 0 & !is.na(time_billable$Billable), ]$Billable <- rep("Full Service", dim(time_billable[time_billable$Billable == 0 & !is.na(time_billable$Billable), ])[1])  
-    time_billable[time_billable$Billable == 1  & !is.na(time_billable$Billable), ]$Billable <- rep("Billable", dim(time_billable[time_billable$Billable == 1 & !is.na(time_billable$Billable), ])[1])
+    time_billable$xbrl_status <- NA
+    time_billable[time_billable$Billable == 0 & !is.na(time_billable$Billable), ]$xbrl_status <- "Full Service"
+    time_billable[time_billable$Billable == 1  & !is.na(time_billable$Billable), ]$xbrl_status <- "Billable"
+    time_billable <- time_billable[!names(time_billable) %in% "Billable"]
     #aggregate total time
     time_total <- aggregate(Hours ~ Account.Name + reportingPeriod, FUN = sum, data = timelog)
     names(time_total) <- c("Account.Name", "reportingPeriod", "Hours") #change names to something meaningful
-    time_total$Billable <- rep("Total", dim(time_total)[1]) #add billable status
+    time_total$xbrl_status <- "Total" #add billable status
     time_total <- time_total[,names(time_billable)] #rearrange to match ordering in time_by_qtr
     
     time_all <- rbind(time_billable, time_total)
     
-    time_all <- dcast(time_all, Account.Name ~ reportingPeriod + Billable)
+    time_all <- dcast(time_all, Account.Name ~ reportingPeriod + xbrl_status, value.var = "Hours")
 
 	if(output %in% c("psh")){
 		time_all
