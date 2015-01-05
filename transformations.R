@@ -46,12 +46,12 @@ collapsed_time <- function(){
   
   #initial exclusions. pre-Q2 2013 time and in-progress or not started services
   services <- services[services$Status %in% "Completed",]
-  timelog <- timelog[timelog$Date <= Sys.Date() & timelog$Date >= as.Date("2013-06-30"),]
+  timelog <- timelog[timelog$Date <= Sys.Date() & timelog$Date > as.Date("2013-06-30"),]
   
   collapsed_time <- aggregate(Hours ~ Services.ID, FUN = sum, data = timelog)
   collapsed_history <- merge(services, collapsed_time, "Services.ID", all.x = T)
   
-  collapsed_history <- collapsed_history[collapsed_history$filing.estimate >= as.Date("2013-06-30"),]
+  collapsed_history <- collapsed_history[collapsed_history$filing.estimate > as.Date("2013-06-30"),]
   collapsed_history
   
   pts <- proc.time()
@@ -165,7 +165,7 @@ weekly_time_detail <- function(){
   source("transformations.R")
   
   weekly_time <- weekly_time() #bring in merged time
-  weekly_time <- weekly_time[weekly_time$Date >= "2013-06-30",] #remove unreliable time
+  weekly_time <- weekly_time[weekly_time$Date > "2013-06-30",] #remove unreliable time
   
   ## *************** moved get_role dates to import_timelog function
   
