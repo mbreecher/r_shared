@@ -75,7 +75,6 @@ timelog_with_status <- function(){
   export$calc <- as.numeric(export$Date - export$year_end)%%365
   export[(export$calc >= 360 | export$calc <= 95) & !is.na(export$calc),]$form_type <- "K"
   
-  export <- merge(timelog, service_status, by = c("Account.Name", "Date"))
   #export <- aggregate(Hours ~ monthyear +  xbrl_status + Billable + form_type, data = export, FUN = sum)
   
   export
