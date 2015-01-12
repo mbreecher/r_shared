@@ -335,19 +335,47 @@ import_sec <- function(name = "filing_data.csv" ){
   print(paste(name, "last updated", round(difftime(Sys.time(), file.info(name)$ctime, units = "days"), digits = 1), "days ago", sep = " "))
   
   #remove extra fields to remove potential for incomplete cases due to something extraneous
-  valid_list <- c("accession_number", "name", "cik", "sic", "form", "form_group", 
-             "filing_date", "filing_qtr", "filing_month", "facts", "xbrl_software")
+  valid_list <- c("accession_number", "name", "cik", "sic", "form", "form_group","period_end_date", 
+             "filing_date", "filing_qtr", "filing_month", "facts", "xbrl_software", "filing_category")
   facts <- facts[, names(facts) %in% valid_list]
   #facts <- facts[facts$xbrl_software %in% c("WebFilings"), ]
   #remove incomplete cases
   facts <- facts[complete.cases(facts),]
   #cast columns properly
   facts$filing_date <- as.Date(facts$filing_date, format = "%m/%d/%Y")
+  facts$period_end_date <- as.Date(facts$period_end_date, format = "%m/%d/%Y")
   facts$facts <- as.numeric(facts$facts)
   facts <- facts[facts$form_group %in% c("tens", "amend"),]
   facts <- facts[rev(order(facts$filing_date)), ]
+  
+  #calculate filing deadline estimate for all projects
+  #for facts with form type and registrant type, set reporting offset
+  facts$reporting_offset <- paste(facts$filing_category, facts$form, Sep = "") #placeholder lookup value
+  #set offsets for Qs
+  facts$reporting_offset[facts$reporting_offset %in% c("Smaller Reporting Company 10-Q ", "Smaller Reporting Company 10-Q/A ")] <- 45
+  facts$reporting_offset[facts$reporting_offset %in% c("Non-accelerated Filer 10-Q ", "Non-accelerated Filer 10-Q/A ")] <- 45
+  facts$reporting_offset[facts$reporting_offset %in% c("Smaller Reporting Accelerated Filer 10-Q ", "Smaller Reporting Accelerated Filer 10-Q/A ", "Accelerated Filer 10-Q ", "Accelerated Filer 10-Q/A ")] <- 40
+  facts$reporting_offset[facts$reporting_offset %in% c("Large Accelerated Filer 10-Q ", "Large Accelerated Filer 10-Q/A ")] <- 40
+  #set offsets for Ks
+  facts$reporting_offset[facts$reporting_offset %in% c("Smaller Reporting Company 10-K ", "Smaller Reporting Company 10-K/A ")] <- 90
+  facts$reporting_offset[facts$reporting_offset %in% c("Non-accelerated Filer 10-K ", "Non-accelerated Filer 10-K/A ")] <- 90
+  facts$reporting_offset[facts$reporting_offset %in% c("Smaller Reporting Accelerated Filer 10-K ", "Smaller Reporting Accelerated Filer 10-K/A ","Accelerated Filer 10-K ", "Accelerated Filer 10-K/A ")] <- 75
+  facts$reporting_offset[facts$reporting_offset %in% c("Large Accelerated Filer 10-K ", "Large Accelerated Filer 10-K/A ")] <- 60
+  #
+  facts$reporting_offset[!(facts$reporting_offset %in% c(40, 45, 60, 75, 90))] = NA
+  
+
+  #with reporting offset, calculate filing.deadline 
+  facts$filing.deadline <- NA
+  facts$filing.deadline <- as.Date(facts$filing.deadline)
+  facts[facts$reporting_offset %in% c(40, 45, 60, 75, 90), ]$filing.deadline <- 
+    as.Date(facts[facts$reporting_offset %in% c(40, 45, 60, 75, 90),]$period_end_date) + 
+    as.numeric(facts[facts$reporting_offset %in% c(40, 45, 60, 75, 90),]$reporting_offset)
+  
   facts
 }
+
+unique(facts[is.na(facts$filing.deadline),]$filing_category)
 
 import_sales_recommendations <- function(name = "sales_recommendations_for_ps_history.csv" ){
   setwd('C:/R/workspace/source')
