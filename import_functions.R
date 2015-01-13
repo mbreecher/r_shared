@@ -375,8 +375,6 @@ import_sec <- function(name = "filing_data.csv" ){
   facts
 }
 
-unique(facts[is.na(facts$filing.deadline),]$filing_category)
-
 import_sales_recommendations <- function(name = "sales_recommendations_for_ps_history.csv" ){
   setwd('C:/R/workspace/source')
   sales_rec <- read.csv(name, header = T , stringsAsFactors=F)
