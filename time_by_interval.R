@@ -1,4 +1,4 @@
-timelog_monthly_with_status <- function(){
+timelog_with_status <- function(){
   library(reshape2)
   library(plyr)
   library(RecordLinkage)
@@ -23,6 +23,7 @@ timelog_monthly_with_status <- function(){
   timelog <- timelog[timelog$Date <= Sys.Date() & timelog$Date > as.Date("2013-06-30"),]
   
   timelog$monthyear <- format(timelog$Date, format = "%y-%m")
+  timelog$weekyear <- format(timelog$Date, format = "%y-%U")
   
   full_service_types <- c("Standard Import","Full Service Roll Forward", "Roll Forward", "Detail Tagging", "Full Service Standard Import")
 
