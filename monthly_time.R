@@ -1,4 +1,4 @@
-timelog_with_status <- function(){
+timelog_monthly_with_status <- function(){
   library(reshape2)
   library(plyr)
   library(RecordLinkage)
