@@ -25,7 +25,7 @@ timelog_with_status <- function(){
   timelog$monthyear <- format(timelog$Date, format = "%y-%m")
   timelog$weekyear <- format(timelog$Date, format = "%y-%U")
   
-  full_service_types <- c("Standard Import","Full Service Roll Forward", "Roll Forward", "Detail Tagging", "Full Service Standard Import")
+  full_service_types <- c("Standard Import","Full Service Roll Forward", "Roll Forward", "Detail Tagging", "Full Service Standard Import", "Full Review")
 
   year_end_df <- ddply(timelog, .var = c("Account.Name"), .fun = function(x){ # 23.69 seconds
     year_end <- NA
