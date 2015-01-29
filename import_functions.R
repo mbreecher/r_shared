@@ -6,6 +6,7 @@ import_timelog <- function(name = "timelog_for_R.csv", wd = 'C:/R/workspace/sour
     setwd(wd)
     timelog <- read.csv(name, header = T , stringsAsFactors=F)
     print(paste(name, "last updated", round(difftime(Sys.time(), file.info(name)$ctime, units = "days"), digits = 1), "days ago", sep = " "))
+    setwd('C:/R/workspace/source')
     start_dates <- read.csv("ps_start_dates.csv", header = T , stringsAsFactors=F)
     print(paste("ps_start_dates.csv", "last updated", round(difftime(Sys.time(), file.info("ps_start_dates.csv")$ctime, units = "days"), digits = 1), "days ago", sep = " "))
     
