@@ -459,3 +459,113 @@ import_app_filing_data <- function(name = "app_filing_data.csv"){
   app_data
 }
 
+import_daily_hours <- function(name = "daily_hours.csv", wd = 'C:/R/workspace/source'){
+  #import and cleanup timelog
+  setwd(wd)
+  daily <- read.csv(name, header = T , stringsAsFactors=F)
+  print(paste(name, "last updated", round(difftime(Sys.time(), file.info(name)$ctime, units = "days"), digits = 1), "days ago", sep = " "))
+  setwd('C:/R/workspace/source')
+  start_dates <- read.csv("ps_start_dates.csv", header = T , stringsAsFactors=F)
+  print(paste("ps_start_dates.csv", "last updated", round(difftime(Sys.time(), file.info("ps_start_dates.csv")$ctime, units = "days"), digits = 1), "days ago", sep = " "))
+  
+  #trim footer information
+  daily <- daily[1:(dim(daily)[1] - 5),]
+  
+  #cleanup names and data values
+  daily$Date <- as.Date(daily$Date, format = "%m/%d/%Y")
+  daily <- daily[!is.na(daily$Hours) && !is.na(daily$Date),]
+  names(daily)[names(daily) %in% "Daily.Log..Owner.Role"] <- "User.Title"
+  start_dates$Start.Date <- as.Date(start_dates$Start.Date, format = "%m/%d/%Y")
+  start_dates$End.Date <- as.Date(start_dates$End.Date, format = "%m/%d/%Y")
+  
+  #case 1: Known PSMs
+  daily$is_psm <- NA
+  daily[daily$User %in% start_dates[is.na(start_dates$Start.Date) & is.na(start_dates$End.Date), ]$Full.Name, ]$is_psm <- 1 #with no movement in position
+  for (psm in start_dates[!is.na(start_dates$Start.Date) | !is.na(start_dates$End.Date), ]$Full.Name) {#need to subset for each psm
+    if (!is.na(start_dates[start_dates$Full.Name %in% psm, ]$Start.Date)){
+      if(length(daily[daily$User %in% psm & !is.na(daily$User) & daily$Date >= start_dates[start_dates$Full.Name %in% psm, ]$Start.Date, ]$is_psm) > 0){
+        daily[daily$User %in% psm & !is.na(daily$User) & daily$Date >= start_dates[start_dates$Full.Name %in% psm, ]$Start.Date, ]$is_psm <- 1
+      }
+      if(length(daily[daily$User %in% psm & !is.na(daily$User) & daily$Date < start_dates[start_dates$Full.Name %in% psm, ]$Start.Date, ]$is_psm) > 0){
+        daily[daily$User %in% psm & !is.na(daily$User) & daily$Date < start_dates[start_dates$Full.Name %in% psm, ]$Start.Date, ]$is_psm <- 0
+      }
+    }
+    if (!is.na(start_dates[start_dates$Full.Name %in% psm, ]$End.Date)){
+      if(length(daily[daily$User %in% psm & !is.na(daily$User) & daily$Date <= start_dates[start_dates$Full.Name %in% psm, ]$End.Date, ]$is_psm) > 0){
+        daily[daily$User %in% psm & !is.na(daily$User) & daily$Date <= start_dates[start_dates$Full.Name %in% psm, ]$End.Date, ]$is_psm <- 1 
+      }
+      if(length(daily[daily$User %in% psm & !is.na(daily$User) & daily$Date > start_dates[start_dates$Full.Name %in% psm, ]$End.Date, ]$is_psm) > 0){
+        daily[daily$User %in% psm & !is.na(daily$User) & daily$Date > start_dates[start_dates$Full.Name %in% psm, ]$End.Date, ]$is_psm <- 0
+      }
+    }
+  }
+  #case 2: unknown PSMs
+  # *******************stop
+  ps_titles <- c("Professional Services Managers")
+  if(length(daily[daily$User.Title %in% ps_titles, ]$is_psm) > 0){
+    daily[daily$User.Title %in% ps_titles, ]$is_psm <- 1
+  }
+  
+  #now all relevant time is marked, remove 0 and na time from timelog
+  daily <- daily[daily$is_psm %in% "1", ] # ~ 1%
+  
+  #****************************** import role dates
+  #get role dates
+  setwd("C:/R/workspace/source")
+  role_dates <- read.csv("ps_start_dates.csv", header = T, stringsAsFactors = F)
+  print(paste("ps_start_dates.csv", "last updated", round(difftime(Sys.time(), file.info("ps_start_dates.csv")$ctime, units = "days"), digits = 1), "days ago", sep = " "))
+  role_dates[,!(colnames(role_dates) %in% (c("Full.Name")))] <- 
+    lapply(role_dates[,!(colnames(role_dates) %in% (c("Full.Name")))],FUN = as.Date, format = "%m/%d/%Y")
+  
+  #set all time to PSM when the title says psm or sr psm
+  daily$role <- NA
+  daily[daily$User.Title %in% unique(daily$User.Title)[grep("Professional", unique(daily$User.Title))],]$role <- "PSM"
+  
+  #for those with a start date, set time before to NA
+  for (i in 1:length(role_dates[!is.na(role_dates$Start.Date),]$Full.Name)){
+    psm <- role_dates[!is.na(role_dates$Start.Date),]$Full.Name[i]
+    start <- role_dates[!is.na(role_dates$Start.Date),]$Start.Date[i]
+    if(length(daily[daily$User %in% psm & daily$Date < start, ]$role) > 0){
+      daily[daily$User %in% psm & daily$Date < start, ]$role <- NA
+    }
+  }
+  
+  #for psms promoted to senior, set time forward to Sr PSM
+  for (i in 1:length(role_dates[!is.na(role_dates$to_senior),]$Full.Name)){
+    psm <- role_dates[!is.na(role_dates$to_senior),]$Full.Name[i]
+    promotion_date <- role_dates[!is.na(role_dates$to_senior),]$to_senior[i]
+    if(length(daily[daily$User %in% psm & daily$Date >= promotion_date, ]$role) > 0){
+      daily[daily$User %in% psm & daily$Date >= promotion_date, ]$role <- "Sr PSM"
+    }
+  }
+  
+  #for srs promoted to tms, set time forward to TM
+  for (i in 1:length(role_dates[!is.na(role_dates$to_tm),]$Full.Name)){
+    psm <- role_dates[!is.na(role_dates$to_tm),]$Full.Name[i]
+    promotion_date <- role_dates[!is.na(role_dates$to_tm),]$to_tm[i]
+    if(length(daily[daily$User %in% psm & daily$Date >= promotion_date, ]$role) > 0 ){
+      daily[daily$User %in% psm & daily$Date >= promotion_date, ]$role <- "TM"
+    }
+  }
+  
+  #for tms promoted to director, set time forward to director
+  for (i in 1:length(role_dates[!is.na(role_dates$to_director),]$Full.Name)){
+    psm <- role_dates[!is.na(role_dates$to_director),]$Full.Name[i]
+    promotion_date <- role_dates[!is.na(role_dates$to_director),]$to_director[i]
+    if(length(daily[daily$User %in% psm & daily$Date >= promotion_date, ]$role) > 0){
+      daily[daily$User %in% psm & daily$Date >= promotion_date, ]$role <- "Director"
+    }
+  }
+  
+  #for psms who left PS, set time forward to NA
+  for (i in 1:length(role_dates[!is.na(role_dates$End.Date),]$Full.Name)){
+    psm <- role_dates[!is.na(role_dates$End.Date),]$Full.Name[i]
+    term_date <- role_dates[!is.na(role_dates$End.Date),]$End.Date[i]
+    if(length(daily[daily$User %in% psm & daily$Date >= term_date, ]$role) > 0){
+      daily[daily$User %in% psm & daily$Date >= term_date, ]$role <- NA
+    }
+  }
+  
+daily
+  
+}
