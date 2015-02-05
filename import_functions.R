@@ -569,3 +569,59 @@ import_daily_hours <- function(name = "daily_hours.csv", wd = 'C:/R/workspace/so
 daily
   
 }
+
+import_netsuite_time <- function(file = "PS_Daily_Booked_Hours_by_User_Job_Code_Project_report.csv", wd = "C:/R/workspace/source"){
+  setwd("C:/R/workspace/netsuite/data")
+  source <- readRDS("aggregate_time.rds")
+  
+  setwd(wd)
+  netsuite <- read.csv(file, header = F, stringsAsFactors = F)
+  print(paste(file, "last updated", round(difftime(Sys.time(), file.info(file)$ctime, units = "days"), digits = 1), "days ago", sep = " "))
+  netsuite <- netsuite[-1,]
+  
+  #populate psm and job to columns a and b
+  for (row in 1:dim(netsuite)[1]){
+    if (netsuite[row, 1] %in% " "){
+      
+    }else{
+      job = netsuite[row, 1]
+    }
+    if (netsuite[row, 2] %in% " "){
+      
+    }else{
+      psm = netsuite[row, 2]
+    }
+    if (!netsuite[row, 3] %in% " "){
+      netsuite[row, 1] <- job
+      netsuite[row, 2] <- psm
+    }
+  }
+  #grab row 1 for header and remove
+  names(netsuite) <- netsuite[1,]
+  netsuite <- netsuite[-1,]
+  #trim leading psm and job rows
+  names(netsuite) <- gsub("- ","",names(netsuite))
+  names(netsuite) <- gsub(" ",".",names(netsuite))
+  netsuite$services_id_15 <- substr(netsuite$"Project.SFDC.Project.ID",1,15)
+  
+  #cast data values
+  netsuite$"Project.Quarter.End.Date.(QED)" <- as.Date(netsuite$"Project.Quarter.End.Date.(QED)", format = "%m/%d/%Y")
+  netsuite$"Project.Filing.Date" <- as.Date(netsuite$"Project.Filing.Date", format = "%m/%d/%Y")
+  netsuite$"Project.Filing.Deadline.Date" <- as.Date(netsuite$"Project.Filing.Deadline.Date", format = "%m/%d/%Y")
+  
+  netsuite <- netsuite[!netsuite$services_id_15 %in% "",] #remove header rows from report
+  
+  #need to dcast with psm, srpsm, tm fields
+  #netsuite$"Job code" <- as.factor(netsuite$"Job code")
+  resources <- dcast(netsuite, services_id_15 ~ Job.code, paste, value.var = "User", collapse = "\n")
+  resources <- resources[!resources$services_id_15 %in% " ",]
+  netsuite <- netsuite[,!names(netsuite) %in% c("Job.code", "User")]
+  netsuite <- merge(netsuite, resources, by = "services_id_15", all.x = T)
+  
+  netsuite <- unique(rbind(source, netsuite))
+  
+  setwd("C:/R/workspace/netsuite/data")
+  saveRDS(netsuite, file = "aggregate_time.rds")
+  
+  netsuite
+}

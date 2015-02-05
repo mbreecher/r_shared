@@ -1,29 +1,19 @@
 # import function to read revenue data from database
 get_revenue_data <- function(){
-  library(RMySQL)
-  setwd("C:/R/workspace/shared")
-  source("get_query.r")
-  load("db_creds.Rdata")
-  
-  #grab project and collapsed time data from mysql database
-  con <- dbConnect(dbDriver("MySQL"), user = username, password = password, dbname = "revenue_analysis")
-  
-  sql <- paste("select subcloud.service_id, subcloud.list_price, subcloud.sales_price, subcloud.opportunity_id 
-               from subcloud
-               where subcloud.service_id like 'a0%'", sep = "")                
-  
-  query <- dbGetQuery(con, sql)
-  dbDisconnect(con)
+  opportunities <- import_opportunities()
+  opportunities <- opportunities[,names(opportunities) %in% c("Line.Item.18.Digit.Id", "List.Price", "Sales.Price")]
   
   #import 2013Q2+ services per scheduled services
   setwd("C:/R/workspace/shared")
   source("import_functions.R")
   services <- import_services()
+  services <- services[!services$OpportunityLineItem.Id %in% "",]
   services <- services[services$reportingPeriod >= '20132' & !is.na(services$reportingPeriod), ]
   
   setwd("C:/R/workspace/Ali")
   
-  result <- merge(services, query, by.x = "Services.ID", by.y = "service_id", all.x = T)
+  opportunities <- opportunities[opportunities$Line.Item.18.Digit.Id %in% services$OpportunityLineItem.Id,]
+  result <- merge(services, opportunities, by.x = "OpportunityLineItem.Id", by.y = "Line.Item.18.Digit.Id")
   
   #temp abigail changes
   setwd("C:/R/workspace/Ali")
@@ -31,8 +21,8 @@ get_revenue_data <- function(){
   check <- c()
   for (id in unique(price_update$Services.ID)){
     if(length(result[result$Services.ID %in% id,]$Services.ID) > 0){
-      result[result$Services.ID %in% id,]$list_price <- price_update[price_update$Services.ID %in% id,]$list_price_updated
-      result[result$Services.ID %in% id,]$sales_price <- price_update[price_update$Services.ID %in% id,]$sales_price_updated 
+      result[result$Services.ID %in% id,]$List.Price <- price_update[price_update$Services.ID %in% id,]$list_price_updated
+      result[result$Services.ID %in% id,]$Sales.Price <- price_update[price_update$Services.ID %in% id,]$sales_price_updated 
     }
   }
   
