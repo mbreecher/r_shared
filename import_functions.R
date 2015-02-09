@@ -174,6 +174,16 @@ import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/w
     services$Filing.Deadline <- as.Date(services$Filing.Deadline, format = "%m/%d/%Y")
     services$Year.End <- format(services$Year.End, format = "%Y-%U")
     
+    #update estimated hours manually 
+    setwd("C:/R/workspace/source")
+    estimates <- read.csv("estimated_hours.csv", header = T, stringsAsFactors = F)
+    print(paste("estimated_hours.csv", "last updated", round(difftime(Sys.time(), file.info("estimated_hours.csv")$ctime, units = "days"), digits = 1), "days ago", sep = " "))
+    for(i in 1:dim(estimates)[1]){
+      if(length(services[services$Service.Type %in% estimates$Service.Type[i] & services$Form.Type %in% estimates$Form.Type[i],]$Hours.Estimate) > 0){
+        services[services$Service.Type %in% estimates$Service.Type[i] & services$Form.Type %in% estimates$Form.Type[i],]$Hours.Estimate <- estimates$Estimated[i]  
+      }
+    }
+    
     #build a lits of unique customers and customer data
     base_info <- c("Account.Name", "CIK", "CSM", "Sr.CSM", "PSM", "Sr.PSM", "Churn.Date", "Year.End", "XBRL.Status", "Goodwill.Hours.Available")
     #certain customer service lin items don't populate account info. We need to do that manually to prevent data duplication

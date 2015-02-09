@@ -13,7 +13,7 @@ get_revenue_data <- function(){
   setwd("C:/R/workspace/Ali")
   
   opportunities <- opportunities[opportunities$Line.Item.18.Digit.Id %in% services$OpportunityLineItem.Id,]
-  result <- merge(services, opportunities, by.x = "OpportunityLineItem.Id", by.y = "Line.Item.18.Digit.Id")
+  result <- merge(services, opportunities, by.x = "OpportunityLineItem.Id", by.y = "Line.Item.18.Digit.Id", all.x = T)
   
   #temp abigail changes
   setwd("C:/R/workspace/Ali")
