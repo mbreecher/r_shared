@@ -28,7 +28,7 @@ collapsed_opportunities <- function(){
   
 } 
 
-collapsed_time <- function(){
+collapsed_time_with_billable <- function(){
   library(reshape2)
   library(plyr)
   library(RecordLinkage)
