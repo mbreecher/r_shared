@@ -4,7 +4,7 @@ collapsed_opportunities <- function(){
   source("transformations.r")
   
   opps <- import_opportunities()
-  collapsed_time <- collapsed_time()
+  collapsed_time <- collapsed_time_with_billable()
   
   result <- merge(opps[!is.na(opps$Line.Item.18.Digit.Id) & !opps$Line.Item.18.Digit.Id %in% c(""),], 
                   collapsed_time[,!names(collapsed_time) %in% names(opps)], 
