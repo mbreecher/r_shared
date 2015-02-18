@@ -1,5 +1,5 @@
 # import function to read revenue data from database
-get_revenue_data <- function(){
+get_revenue_data <- function(remove_blank_oppid = T){
   opportunities <- import_opportunities()
   opportunities <- opportunities[,names(opportunities) %in% c("Line.Item.18.Digit.Id", "List.Price", "Sales.Price")]
   
@@ -7,13 +7,23 @@ get_revenue_data <- function(){
   setwd("C:/R/workspace/shared")
   source("import_functions.R")
   services <- import_services()
-  services <- services[!services$OpportunityLineItem.Id %in% "",]
+  if(remove_blank_oppid == T){
+    services <- services[!services$OpportunityLineItem.Id %in% "",]  
+  }else{
+    blank_oppid <- services[services$OpportunityLineItem.Id %in% "",]  
+    blank_oppid$List.Price = -1; blank_oppid$Sales.Price = -1
+    services <- services[!services$OpportunityLineItem.Id %in% "",]  
+  }
   services <- services[services$reportingPeriod >= '20132' & !is.na(services$reportingPeriod), ]
   
   setwd("C:/R/workspace/Ali")
   
   opportunities <- opportunities[opportunities$Line.Item.18.Digit.Id %in% services$OpportunityLineItem.Id,]
   result <- merge(services, opportunities, by.x = "OpportunityLineItem.Id", by.y = "Line.Item.18.Digit.Id", all.x = T)
+  
+  if(remove_blank_oppid == F){
+    result <- rbind(result, blank_oppid)
+  }
   
   #temp abigail changes
   setwd("C:/R/workspace/Ali")

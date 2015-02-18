@@ -135,6 +135,29 @@ collapsed_time_with_billable <- function(){
   export
 }
 
+collapsed_time <- function(){
+  
+  # Pull in import functions
+  setwd("C:/R/workspace/shared")
+  source("import_functions.R")
+  
+  #import services and include customer status = none
+  services <- import_services()
+  timelog <- import_timelog()
+  
+  #initial exclusions. pre-Q2 2012 time and in-progress or not started services
+  services <- services[services$Status %in% "Completed",]
+  timelog <- timelog[timelog$Date <= Sys.Date() & timelog$Date >= as.Date("2012-06-30"),]
+  
+  collapsed_time <- aggregate(Hours ~ Services.ID + role, FUN = sum, data = timelog)
+  collapsed_time <- dcast(collapsed_time, Services.ID ~ role, sum, value.var = "Hours")
+  collapsed_time$Hours <- rowSums(collapsed_time[,!names(collapsed_time) %in% c("Services.ID")])
+  collapsed_history <- merge(services, collapsed_time, "Services.ID", all.x = T)
+  
+  collapsed_history <- collapsed_history[collapsed_history$filing.estimate >= as.Date("2012-06-30"),]
+  collapsed_history
+}
+
 weekly_time <- function(){
   library(reshape2)
   library(plyr)
