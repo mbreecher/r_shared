@@ -1,10 +1,10 @@
-collapsed_opportunities <- function(){
+collapsed_opportunities <- function(...){
   setwd("C:/R/workspace/shared")
   source("import_functions.r")
   source("transformations.r")
   
   opps <- import_opportunities()
-  collapsed_time <- collapsed_time_with_billable()
+  collapsed_time <- collapsed_time_with_billable(include_completed = T)
   
   result <- merge(opps[!is.na(opps$Line.Item.18.Digit.Id) & !opps$Line.Item.18.Digit.Id %in% c(""),], 
                   collapsed_time[,!names(collapsed_time) %in% names(opps)], 
@@ -26,39 +26,9 @@ collapsed_opportunities <- function(){
   
   result
   
-} 
+}  
 
-opportunities_with_time <- function(){
-  setwd("C:/R/workspace/shared")
-  source("import_functions.r")
-  source("transformations.r")
-  
-  opps <- import_opportunities()
-  time <- import_timelog()
-  
-  result <- merge(opps[!is.na(opps$Line.Item.18.Digit.Id) & !opps$Line.Item.18.Digit.Id %in% c(""),], 
-                  time[,!names(time) %in% names(opps)], 
-                  by.x = c("Line.Item.18.Digit.Id"), by.y = c("OpportunityLineItem.Id"))
-  
-  #temp abigail changes
-  setwd("C:/R/workspace/Ali")
-  price_update <- read.csv("abigail_price_updates.csv", header = T, stringsAsFactors = F)
-  print(paste("abigail_price_updates.csv", "last updated", round(difftime(Sys.time(), file.info("abigail_price_updates.csv")$ctime, units = "days"), digits = 1), "days ago", sep = " "))
-  check <- c()
-  for (id in unique(price_update$Services.ID)){
-    if(length(result[result$Services.ID %in% id,]$Services.ID) > 0){
-      result[result$Services.ID %in% id,]$List.Price <- price_update[price_update$Services.ID %in% id,]$list_price_updated
-      result[result$Services.ID %in% id,]$Sales.Price <- price_update[price_update$Services.ID %in% id,]$sales_price_updated 
-    }
-  }
-  
-  result$monthyear <- format(result$filing.estimate, format = "%y-%m")
-  
-  result
-  
-} 
-
-collapsed_time_with_billable <- function(){
+collapsed_time_with_billable <- function(include_completed = F){
   library(reshape2)
   library(plyr)
   library(RecordLinkage)
@@ -75,7 +45,9 @@ collapsed_time_with_billable <- function(){
   diy_time <- import_billable() 
   
   #initial exclusions. pre-Q2 2013 time and in-progress or not started services
-  services <- services[services$Status %in% "Completed",]
+  if(include_completed == F){
+    services <- services[services$Status %in% "Completed",]  
+  }
   timelog <- timelog[timelog$Date <= Sys.Date() & timelog$Date > as.Date("2013-06-30"),]
   
   collapsed_time <- aggregate(Hours ~ Services.ID, FUN = sum, data = timelog)
