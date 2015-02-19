@@ -1,7 +1,7 @@
 #I wanted to separate import and cleanup functions to minimize the noise in the aggregation
 
 
-import_timelog <- function(name = "timelog_for_R.csv", wd = 'C:/R/workspace/source', output = 'simple'){
+import_timelog <- function(name = "timelog_for_R.csv", wd = 'C:/R/workspace/source', output = 'simple', include_cs = F){
     #import and cleanup timelog
     setwd(wd)
     timelog <- read.csv(name, header = T , stringsAsFactors=F)
@@ -55,7 +55,9 @@ import_timelog <- function(name = "timelog_for_R.csv", wd = 'C:/R/workspace/sour
     }
     
     #now all relevant time is marked, remove 0 and na time from timelog
-    timelog <- timelog[timelog$is_psm == 1 & !is.na(timelog$is_psm), ]
+    if(include_cs == F){
+      timelog <- timelog[timelog$is_psm == 1 & !is.na(timelog$is_psm), ]    
+    }
     
     #Construct the Period Identifiers for service grouping
     timelog$filingPeriod <- paste(as.numeric(format(timelog$Date, "%Y")), ceiling(as.numeric(format(timelog$Date, "%m"))/3), sep = "")

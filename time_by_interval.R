@@ -1,4 +1,4 @@
-timelog_with_status <- function(){
+timelog_with_status <- function(...){
   library(reshape2)
   library(plyr)
   library(RecordLinkage)
@@ -9,7 +9,7 @@ timelog_with_status <- function(){
   
   #import services and include customer status = none
   services <- import_services()
-  timelog <- import_timelog()
+  timelog <- import_timelog(...)
   setwd("C:/R/workspace/source")
   missing_yed <- read.csv("accounts_with_year_end.csv", header = T, stringsAsFactors = F)
   print(paste("accounts_with_year_end.csv", "last updated", round(difftime(Sys.time(), file.info("accounts_with_year_end.csv")$ctime, units = "days"), digits = 1), "days ago", sep = " "))
