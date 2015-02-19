@@ -152,6 +152,8 @@ collapsed_time <- function(){
   timelog <- timelog[timelog$Date <= Sys.Date() & timelog$Date >= as.Date("2012-06-30"),]
   
   collapsed_time <- aggregate(Hours ~ Services.ID + role, FUN = sum, data = timelog)
+  collapsed_time[collapsed_time$role %in% "PSM",]$role <- "PSM.Hours"
+  collapsed_time[collapsed_time$role %in% "Sr PSM",]$role <- "Sr.PSM.Hours"
   collapsed_time <- dcast(collapsed_time, Services.ID ~ role, sum, value.var = "Hours")
   collapsed_time$Hours <- rowSums(collapsed_time[,!names(collapsed_time) %in% c("Services.ID")])
   collapsed_history <- merge(services, collapsed_time, "Services.ID", all.x = T)
