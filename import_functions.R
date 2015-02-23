@@ -73,9 +73,10 @@ import_timelog <- function(name = "timelog_for_R.csv", wd = 'C:/R/workspace/sour
     role_dates[,!(colnames(role_dates) %in% (c("Full.Name")))] <- 
       lapply(role_dates[,!(colnames(role_dates) %in% (c("Full.Name")))],FUN = as.Date, format = "%m/%d/%Y")
     
-    #set all time to PSM when the title says psm or sr psm
+    #set all time to PSM when the title says psm or sr psm or if the is_psm boolean is 1
     timelog$role <- NA
     timelog[timelog$User.Title %in% unique(timelog$User.Title)[grep("Professional", unique(timelog$User.Title))],]$role <- "PSM"
+    timelog[timelog$is_psm %in% 1,]$role <- "PSM"
     
     #for those with a start date, set time before to NA
     for (i in 1:length(role_dates[!is.na(role_dates$Start.Date),]$Full.Name)){
@@ -121,6 +122,8 @@ import_timelog <- function(name = "timelog_for_R.csv", wd = 'C:/R/workspace/sour
         timelog[timelog$User %in% psm & timelog$Date >= term_date, ]$role <- NA
       }
     }
+    
+    #
     
     #****************************** /import role dates
     
