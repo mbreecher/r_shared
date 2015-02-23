@@ -123,8 +123,6 @@ import_timelog <- function(name = "timelog_for_R.csv", wd = 'C:/R/workspace/sour
       }
     }
     
-    #
-    
     #****************************** /import role dates
     
     #aggregate time by billable and non-billable
