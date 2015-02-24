@@ -4,7 +4,7 @@ collapsed_opportunities <- function(...){
   source("transformations.r")
   
   opps <- import_opportunities()
-  collapsed_time <- collapsed_time_with_billable(include_completed = T)
+  collapsed_time <- collapsed_time_with_billable(include_incomplete = T)
   
   result <- merge(opps[!is.na(opps$Line.Item.18.Digit.Id) & !opps$Line.Item.18.Digit.Id %in% c(""),], 
                   collapsed_time[,!names(collapsed_time) %in% names(opps)], 
@@ -28,7 +28,7 @@ collapsed_opportunities <- function(...){
   
 }  
 
-collapsed_time_with_billable <- function(include_completed = F){
+collapsed_time_with_billable <- function(include_incomplete = F){
   library(reshape2)
   library(plyr)
   library(RecordLinkage)
@@ -45,7 +45,7 @@ collapsed_time_with_billable <- function(include_completed = F){
   diy_time <- import_billable() 
   
   #initial exclusions. pre-Q2 2013 time and in-progress or not started services
-  if(include_completed == F){
+  if(include_incomplete == F){
     services <- services[services$Status %in% "Completed",]  
   }
   timelog <- timelog[timelog$Date <= Sys.Date() & timelog$Date > as.Date("2013-06-30"),]
