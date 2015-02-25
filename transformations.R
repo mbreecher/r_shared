@@ -8,7 +8,7 @@ collapsed_opportunities <- function(...){
   
   result <- merge(opps[!is.na(opps$Line.Item.18.Digit.Id) & !opps$Line.Item.18.Digit.Id %in% c(""),], 
                   collapsed_time[,!names(collapsed_time) %in% names(opps)], 
-                  by.x = c("Line.Item.18.Digit.Id"), by.y = c("OpportunityLineItem.Id"))
+                  by.x = c("Line.Item.18.Digit.Id"), by.y = c("OpportunityLineItem.Id"), all.x = T)
   
   #temp abigail changes
   setwd("C:/R/workspace/Ali")
