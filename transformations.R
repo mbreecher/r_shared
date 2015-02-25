@@ -10,11 +10,6 @@ collapsed_opportunities <- function(...){
                   collapsed_time[,!names(collapsed_time) %in% names(opps)], 
                   by.x = c("Line.Item.18.Digit.Id"), by.y = c("OpportunityLineItem.Id"), all.x = T)
   
-  #add filing date from services
-  services <- import_services()
-  filing_dates <- unique(services[,names(services) %in% c("OpportunityLineItem.Id", "Filing.Date", "CSM", "PSM", "Sr.PSM", "Sr.CSM", "CS.TM", "PS.TM")])
-  result <- merge(result, filing_dates, by.x = "Line.Item.18.Digit.Id", by.y = "OpportunityLineItem.Id", all.x = T)
-  
   #temp abigail changes
   setwd("C:/R/workspace/Ali")
   price_update <- read.csv("abigail_price_updates.csv", header = T, stringsAsFactors = F)
