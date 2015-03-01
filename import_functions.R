@@ -345,8 +345,8 @@ import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/w
     
 }
 
-import_sec <- function(name = "filing_data.csv" ){
-  setwd('C:/R/workspace/source')
+import_sec <- function(name = "filing_data.csv", wd ="C:/R/workspace/source"  ){
+  setwd(wd)
   facts <- read.csv(name, header = T , stringsAsFactors=F)
   print(paste(name, "last updated", round(difftime(Sys.time(), file.info(name)$ctime, units = "days"), digits = 1), "days ago", sep = " "))
   
@@ -463,8 +463,8 @@ import_hierarchy <- function(name = "hierarchy.csv"){
   hierarchy
 }
 
-import_app_filing_data <- function(name = "app_filing_data.csv"){
-  setwd('C:/R/workspace/source')
+import_app_filing_data <- function(name = "app_filing_data.csv", wd = "C:/R/workspace/source"){
+  setwd(wd)
   app_data <- read.csv(name, header = T, stringsAsFactors = F)
   print(paste(name, "last updated", round(difftime(Sys.time(), file.info(name)$ctime, units = "days"), digits = 1), "days ago", sep = " "))
   app_data$Filing.Date <- as.Date(app_data$Filing.Date, format = "%m/%d/%Y")
@@ -472,6 +472,11 @@ import_app_filing_data <- function(name = "app_filing_data.csv"){
   app_data$Fact.Cnt <- as.numeric(app_data$Fact.Cnt)
   app_data$EXT.Fact.Cnt <- as.numeric(app_data$EXT.Fact.Cnt)
   app_data
+}
+
+load_app_filing_data(){
+  setwd("c:/r/workspace/source")
+  test <- readRDS("app_filings.Rda")  
 }
 
 import_daily_hours <- function(name = "daily_hours.csv", wd = 'C:/R/workspace/source'){
