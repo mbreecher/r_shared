@@ -474,7 +474,7 @@ import_app_filing_data <- function(name = "app_filing_data.csv", wd = "C:/R/work
   app_data
 }
 
-load_app_filing_data(){
+load_app_filing_data <- function(){
   setwd("c:/r/workspace/source")
   test <- readRDS("app_filings.Rda")  
 }
