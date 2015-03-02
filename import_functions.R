@@ -176,6 +176,7 @@ import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/w
     services$Goodwill.Hours.Available[services$Goodwill.Hours.Available %in% c("0")] <- NA
     services$Quarter.End <- as.Date(services$Quarter.End, format = "%m/%d/%Y")
     services$Filing.Date <- as.Date(services$Filing.Date, format = "%m/%d/%Y")
+    services$Next.Filing.Date <- as.Date(services$Next.Filing.Date, format = "%m/%d/%Y")
     services$Filing.Deadline <- as.Date(services$Filing.Deadline, format = "%m/%d/%Y")
     services$Year.End <- format(services$Year.End, format = "%Y-%U")
     
