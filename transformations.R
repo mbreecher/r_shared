@@ -184,7 +184,6 @@ weekly_time <- function(){
 
 weekly_time_detail <- function(){
   library(plyr)
-  library(RecordLinkage)
   
   # Pull in import functions
   setwd("C:/R/workspace/shared")
@@ -197,7 +196,7 @@ weekly_time_detail <- function(){
   ## *************** moved get_role dates to import_timelog function
   
   #set week integer
-  weekly_time$week <- paste(year(weekly_time$Date),sprintf("%02d", week(weekly_time$Date)), sep = "-")
+  weekly_time$week <- format(weekly_time$Date, format = "%y-%U")
   labels <- ddply(weekly_time, .var = c("week"), function(x){
     min <- min(x$Date)
     max <- max(x$Date)
