@@ -175,9 +175,10 @@ weekly_time <- function(){
   services <- import_services()
   timelog <- import_timelog()
   
-  timelog$logged_week_num <- week(timelog$Date)
-  timelog$filing_week_num <- week(timelog$Filing.Date)
-  timelog$relative_week_num <- timelog$logged_week_num - timelog$filing_week_num
+  timelog$logged_week_num <- as.numeric(format(timelog$Date, format = "%U"))
+  timelog$filing_week_num <- as.numeric(format(timelog$Filing.Date, format = "%U"))
+  timelog$yearvar <- as.numeric(format(timelog$Filing.Date, format = "%Y")) -  as.numeric(format(timelog$Date, format = "%Y"))
+  timelog$relative_week_num <- timelog$logged_week_num - timelog$filing_week_num - 52*timelog$yearvar
   
   result <- merge(timelog, services[,!names(services) %in% names(timelog)[!names(timelog) %in% c("Services.ID")]], by = c("Services.ID"))
 }
