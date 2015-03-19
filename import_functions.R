@@ -501,7 +501,7 @@ import_daily_hours <- function(name = "daily_hours.csv", wd = 'C:/R/workspace/so
   
   #case 1: Known PSMs
   daily$is_psm <- NA
-  daily[daily$User %in% start_dates[is.na(start_dates$Start.Date) & is.na(start_dates$End.Date), ]$Full.Name, ]$is_psm <- 1 #with no movement in position
+  daily[daily$User %in% start_dates[is.na(start_dates$Start.Date) & is.na(start_dates$End.Date), ]$Full.Name, ]$is_psm <- 1 #psms who are still in PS
   for (psm in start_dates[!is.na(start_dates$Start.Date) | !is.na(start_dates$End.Date), ]$Full.Name) {#need to subset for each psm
     if (!is.na(start_dates[start_dates$Full.Name %in% psm, ]$Start.Date)){
       if(length(daily[daily$User %in% psm & !is.na(daily$User) & daily$Date >= start_dates[start_dates$Full.Name %in% psm, ]$Start.Date, ]$is_psm) > 0){
@@ -541,6 +541,7 @@ import_daily_hours <- function(name = "daily_hours.csv", wd = 'C:/R/workspace/so
   #set all time to PSM when the title says psm or sr psm
   daily$role <- NA
   daily[daily$User.Title %in% unique(daily$User.Title)[grep("Professional", unique(daily$User.Title))],]$role <- "PSM"
+  daily[daily$is_psm %in% 1,]$role <- "PSM"
   
   #for those with a start date, set time before to NA
   for (i in 1:length(role_dates[!is.na(role_dates$Start.Date),]$Full.Name)){
