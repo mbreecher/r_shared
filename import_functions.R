@@ -1,154 +1,39 @@
 #I wanted to separate import and cleanup functions to minimize the noise in the aggregation
 
 
-import_timelog <- function(name = "timelog_for_R.csv", wd = 'C:/R/workspace/source', output = 'simple', include_cs = F){
-    #import and cleanup timelog
-    setwd(wd)
-    timelog <- read.csv(name, header = T , stringsAsFactors=F)
-    print(paste(name, "last updated", round(difftime(Sys.time(), file.info(name)$ctime, units = "days"), digits = 1), "days ago", sep = " "))
-    setwd('C:/R/workspace/source')
-    start_dates <- read.csv("ps_start_dates.csv", header = T , stringsAsFactors=F)
-    print(paste("ps_start_dates.csv", "last updated", round(difftime(Sys.time(), file.info("ps_start_dates.csv")$ctime, units = "days"), digits = 1), "days ago", sep = " "))
-    
-    #trim footer information
-    timelog <- timelog[1:(dim(timelog)[1] - 5),]
-    
-    #cleanup names and data values
-    names(timelog)[names(timelog) %in% c("User..Full.Name")] <- "User"
-    names(timelog)[names(timelog) %in% c("Services..Service.Name")] <- "Service"
-    timelog$CIK <- as.numeric(timelog$CIK)
-    timelog$Hours <- as.numeric(timelog$Hours)
-    timelog$Date <- as.Date(timelog$Date, format = "%m/%d/%Y")
-    #timelog$Week <- format(timelog$Date, format = "%Y-%U")
-    timelog$Filing.Date <- as.Date(timelog$Filing.Date, format = "%m/%d/%Y")
-    timelog$Filing.Deadline <- as.Date(timelog$Filing.Deadline, format = "%m/%d/%Y")
-    timelog <- timelog[!is.na(timelog$Hours) && !is.na(timelog$Date),]
-    start_dates$Start.Date <- as.Date(start_dates$Start.Date, format = "%m/%d/%Y")
-    start_dates$End.Date <- as.Date(start_dates$End.Date, format = "%m/%d/%Y")
-    
-    #need to remove non-psm time. 
-    timelog$is_psm <- NA
-    #case 1: Known PSMs
-    timelog[timelog$User %in% start_dates[is.na(start_dates$Start.Date) & is.na(start_dates$End.Date), ]$Full.Name, ]$is_psm <- 1 #with no movement in position
-    for (psm in start_dates[!is.na(start_dates$Start.Date) | !is.na(start_dates$End.Date), ]$Full.Name) {#need to subset for each psm
-      if (!is.na(start_dates[start_dates$Full.Name %in% psm, ]$Start.Date)){
-        if(length(timelog[timelog$User %in% psm & !is.na(timelog$User) & timelog$Date >= start_dates[start_dates$Full.Name %in% psm, ]$Start.Date, ]$is_psm) > 0){
-          timelog[timelog$User %in% psm & !is.na(timelog$User) & timelog$Date >= start_dates[start_dates$Full.Name %in% psm, ]$Start.Date, ]$is_psm <- 1
-        }
-        if(length(timelog[timelog$User %in% psm & !is.na(timelog$User) & timelog$Date < start_dates[start_dates$Full.Name %in% psm, ]$Start.Date, ]$is_psm) > 0){
-          timelog[timelog$User %in% psm & !is.na(timelog$User) & timelog$Date < start_dates[start_dates$Full.Name %in% psm, ]$Start.Date, ]$is_psm <- 0
-        }
-      }
-      if (!is.na(start_dates[start_dates$Full.Name %in% psm, ]$End.Date)){
-        if(length(timelog[timelog$User %in% psm & !is.na(timelog$User) & timelog$Date <= start_dates[start_dates$Full.Name %in% psm, ]$End.Date, ]$is_psm) > 0){
-          timelog[timelog$User %in% psm & !is.na(timelog$User) & timelog$Date <= start_dates[start_dates$Full.Name %in% psm, ]$End.Date, ]$is_psm <- 1 
-        }
-        if(length(timelog[timelog$User %in% psm & !is.na(timelog$User) & timelog$Date > start_dates[start_dates$Full.Name %in% psm, ]$End.Date, ]$is_psm) > 0){
-          timelog[timelog$User %in% psm & !is.na(timelog$User) & timelog$Date > start_dates[start_dates$Full.Name %in% psm, ]$End.Date, ]$is_psm <- 0
-        }
-      }
-    }
-    #case 2: unknown PSMs
-    ps_titles <- c("Senior Professional Services Manager", "Professional Services Manager")
-    if(length(timelog[timelog$User.Title %in% ps_titles & is.na(timelog$is_psm), ]$is_psm) > 0){
-      timelog[timelog$User.Title %in% ps_titles & is.na(timelog$is_psm), ]$is_psm <- 1
-    }
-    
-    #now all relevant time is marked, remove 0 and na time from timelog
-    if(include_cs == F){
-      timelog <- timelog[timelog$is_psm == 1 & !is.na(timelog$is_psm), ]    
-    }
-    
-    #Construct the Period Identifiers for service grouping
-    timelog$filingPeriod <- paste(as.numeric(format(timelog$Date, "%Y")), ceiling(as.numeric(format(timelog$Date, "%m"))/3), sep = "")
-    timelog$reportingPeriod <- ifelse(substr(timelog$filingPeriod, nchar(timelog$filingPeriod), nchar(timelog$filingPeriod)) == 1,
-          paste(as.numeric(format(timelog$Date, "%Y")) -1, 4, sep = ""),
-          paste(as.numeric(format(timelog$Date, "%Y")), ceiling(as.numeric(format(timelog$Date, "%m"))/3) - 1, sep = ""))
-
-    #****************************** import role dates
-    #get role dates
-    setwd("C:/R/workspace/source")
-    role_dates <- read.csv("ps_start_dates.csv", header = T, stringsAsFactors = F)
-    print(paste("ps_start_dates.csv", "last updated", round(difftime(Sys.time(), file.info("ps_start_dates.csv")$ctime, units = "days"), digits = 1), "days ago", sep = " "))
-    role_dates[,!(colnames(role_dates) %in% (c("Full.Name")))] <- 
-      lapply(role_dates[,!(colnames(role_dates) %in% (c("Full.Name")))],FUN = as.Date, format = "%m/%d/%Y")
-    
-    #set all time to PSM when the title says psm or sr psm or if the is_psm boolean is 1
-    timelog$role <- NA
-    timelog[timelog$User.Title %in% unique(timelog$User.Title)[grep("Professional", unique(timelog$User.Title))],]$role <- "PSM"
-    timelog[timelog$is_psm %in% 1,]$role <- "PSM"
-    
-    #for those with a start date, set time before to NA
-    for (i in 1:length(role_dates[!is.na(role_dates$Start.Date),]$Full.Name)){
-      psm <- role_dates[!is.na(role_dates$Start.Date),]$Full.Name[i]
-      start <- role_dates[!is.na(role_dates$Start.Date),]$Start.Date[i]
-      if(length(timelog[timelog$User %in% psm & timelog$Date < start, ]$role) > 0){
-        timelog[timelog$User %in% psm & timelog$Date < start, ]$role <- NA
-      }
-    }
-    
-    #for psms promoted to senior, set time forward to Sr PSM
-    for (i in 1:length(role_dates[!is.na(role_dates$to_senior),]$Full.Name)){
-      psm <- role_dates[!is.na(role_dates$to_senior),]$Full.Name[i]
-      promotion_date <- role_dates[!is.na(role_dates$to_senior),]$to_senior[i]
-      if(length(timelog[timelog$User %in% psm & timelog$Date >= promotion_date, ]$role) > 0){
-        timelog[timelog$User %in% psm & timelog$Date >= promotion_date, ]$role <- "Sr PSM"
-      }
-    }
-    
-    #for srs promoted to tms, set time forward to TM
-    for (i in 1:length(role_dates[!is.na(role_dates$to_tm),]$Full.Name)){
-      psm <- role_dates[!is.na(role_dates$to_tm),]$Full.Name[i]
-      promotion_date <- role_dates[!is.na(role_dates$to_tm),]$to_tm[i]
-      if(length(timelog[timelog$User %in% psm & timelog$Date >= promotion_date, ]$role) > 0 ){
-        timelog[timelog$User %in% psm & timelog$Date >= promotion_date, ]$role <- "TM"
-      }
-    }
-    
-    #for tms promoted to director, set time forward to director
-    for (i in 1:length(role_dates[!is.na(role_dates$to_director),]$Full.Name)){
-      psm <- role_dates[!is.na(role_dates$to_director),]$Full.Name[i]
-      promotion_date <- role_dates[!is.na(role_dates$to_director),]$to_director[i]
-      if(length(timelog[timelog$User %in% psm & timelog$Date >= promotion_date, ]$role) > 0){
-        timelog[timelog$User %in% psm & timelog$Date >= promotion_date, ]$role <- "Director"
-      }
-    }
-    
-    #for psms who left PS, set time forward to NA
-    for (i in 1:length(role_dates[!is.na(role_dates$End.Date),]$Full.Name)){
-      psm <- role_dates[!is.na(role_dates$End.Date),]$Full.Name[i]
-      term_date <- role_dates[!is.na(role_dates$End.Date),]$End.Date[i]
-      if(length(timelog[timelog$User %in% psm & timelog$Date >= term_date, ]$role) > 0){
-        timelog[timelog$User %in% psm & timelog$Date >= term_date, ]$role <- NA
-      }
-    }
-    
-    #****************************** /import role dates
-    
-    #aggregate time by billable and non-billable
-    time_billable <- aggregate(Hours ~ Account.Name + reportingPeriod + Billable, FUN = sum, data = timelog)
-    names(time_billable) <- c("Account.Name", "reportingPeriod", "Billable", "Hours") #change names to something meaningful
-    time_billable$xbrl_status <- NA
-    time_billable[time_billable$Billable == 0 & !is.na(time_billable$Billable), ]$xbrl_status <- "Full Service"
-    time_billable[time_billable$Billable == 1  & !is.na(time_billable$Billable), ]$xbrl_status <- "Billable"
-    time_billable <- time_billable[!names(time_billable) %in% "Billable"]
-    #aggregate total time
-    time_total <- aggregate(Hours ~ Account.Name + reportingPeriod, FUN = sum, data = timelog)
-    names(time_total) <- c("Account.Name", "reportingPeriod", "Hours") #change names to something meaningful
-    time_total$xbrl_status <- "Total" #add billable status
-    time_total <- time_total[,names(time_billable)] #rearrange to match ordering in time_by_qtr
-    
-    time_all <- rbind(time_billable, time_total)
-    
-    time_all <- dcast(time_all, Account.Name ~ reportingPeriod + xbrl_status, value.var = "Hours")
-
-	if(output %in% c("psh")){
-		time_all
-	}else if(output %in% c("simple")){
-		timelog
-	}
-	
-    
+import_timelog <- function(sf_name = "timelog_for_R.csv", oa_name = "time_entry_detail_report__complete_report.csv"){
+  library(plyr)
+  library(reshape2)
+  setwd("C:/R/workspace/shared")
+  source("import_functions.r")
+  
+  # Import salesforce time if necessary, otherwise, read from stored rda file
+  setwd('C:/R/workspace/source')
+  if(file.info(sf_name)$mtime > file.info('sf_time.Rda')$mtime){
+    print("salesforce timelog report has changed, importing salesforce timelog data...")
+    sf_timelog <- import_salesforce_timelog()
+    saveRDS(sf_timelog, file = "sf_time.Rda")  
+  }else{
+    sf_timelog <- readRDS(sf_timelog, file = "sf_time.Rda")
+    print("no change to salesforce time, loading timelog data...")
+  }
+  
+  #import openair time
+  oa_timelog <- import_openair_time()
+  
+  # change names to match salesforce convention
+  original_names <- c("services_id_15","User.Job.code","User.Department.level.within.User.Department.hierarchy","Account",
+                      "Project", "Project.Form.Type", "Project.Project.Type", "Time.Hours","Project.Filing.Date","Project.Filing.Deadline.Date")
+  new_names <- c("Services.ID","User.Title","CS.PS", "Account.Name", "Service", "Form.Type", "Service.Type", "Hours", "Filing.Date", "Filing.Deadline")
+  for(i in 1:length(original_names)){
+    names(oa_timelog)[names(oa_timelog) %in% original_names[i]] <- new_names[i]
+  }
+  
+  #reduce oa timelog and merge the two dataframes
+  timelog <- rbind.fill(oa_timelog, sf_timelog)
+  timelog <- timelog[,names(timelog) %in% names(oa_timelog) & names(timelog) %in% names(sf_timelog)]
+  timelog
+  
 }
 
 import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/workspace/source', output = 'simple'){
@@ -592,58 +477,314 @@ daily
   
 }
 
-import_netsuite_time <- function(file = "PS_Daily_Booked_Hours_by_User_Job_Code_Project_report.csv", wd = "C:/R/workspace/source"){
-  setwd("C:/R/workspace/netsuite/data")
-  source <- readRDS("aggregate_time.rds")
+import_salesforce_timelog <- function(name = "timelog_for_R.csv", wd = 'C:/R/workspace/source', output = 'simple', include_cs = F){
+  #import and cleanup timelog
+  setwd(wd)
+  timelog <- read.csv(name, header = T , stringsAsFactors=F)
+  print(paste(name, "last updated", round(difftime(Sys.time(), file.info(name)$ctime, units = "days"), digits = 1), "days ago", sep = " "))
+  setwd('C:/R/workspace/source')
+  start_dates <- read.csv("ps_start_dates.csv", header = T , stringsAsFactors=F)
+  print(paste("ps_start_dates.csv", "last updated", round(difftime(Sys.time(), file.info("ps_start_dates.csv")$ctime, units = "days"), digits = 1), "days ago", sep = " "))
+  
+  #trim footer information
+  timelog <- timelog[1:(dim(timelog)[1] - 5),]
+  
+  #cleanup names and data values
+  names(timelog)[names(timelog) %in% c("User..Full.Name")] <- "User"
+  names(timelog)[names(timelog) %in% c("Services..Service.Name")] <- "Service"
+  timelog$CIK <- as.numeric(timelog$CIK)
+  timelog$Hours <- as.numeric(timelog$Hours)
+  timelog$Date <- as.Date(timelog$Date, format = "%m/%d/%Y")
+  #timelog$Week <- format(timelog$Date, format = "%Y-%U")
+  timelog$Filing.Date <- as.Date(timelog$Filing.Date, format = "%m/%d/%Y")
+  timelog$Filing.Deadline <- as.Date(timelog$Filing.Deadline, format = "%m/%d/%Y")
+  timelog <- timelog[!is.na(timelog$Hours) && !is.na(timelog$Date),]
+  start_dates$Start.Date <- as.Date(start_dates$Start.Date, format = "%m/%d/%Y")
+  start_dates$End.Date <- as.Date(start_dates$End.Date, format = "%m/%d/%Y")
+  
+  #need to remove non-psm time. 
+  timelog$is_psm <- NA
+  #case 1: Known PSMs
+  timelog[timelog$User %in% start_dates[is.na(start_dates$Start.Date) & is.na(start_dates$End.Date), ]$Full.Name, ]$is_psm <- 1 #with no movement in position
+  for (psm in start_dates[!is.na(start_dates$Start.Date) | !is.na(start_dates$End.Date), ]$Full.Name) {#need to subset for each psm
+    if (!is.na(start_dates[start_dates$Full.Name %in% psm, ]$Start.Date)){
+      if(length(timelog[timelog$User %in% psm & !is.na(timelog$User) & timelog$Date >= start_dates[start_dates$Full.Name %in% psm, ]$Start.Date, ]$is_psm) > 0){
+        timelog[timelog$User %in% psm & !is.na(timelog$User) & timelog$Date >= start_dates[start_dates$Full.Name %in% psm, ]$Start.Date, ]$is_psm <- 1
+      }
+      if(length(timelog[timelog$User %in% psm & !is.na(timelog$User) & timelog$Date < start_dates[start_dates$Full.Name %in% psm, ]$Start.Date, ]$is_psm) > 0){
+        timelog[timelog$User %in% psm & !is.na(timelog$User) & timelog$Date < start_dates[start_dates$Full.Name %in% psm, ]$Start.Date, ]$is_psm <- 0
+      }
+    }
+    if (!is.na(start_dates[start_dates$Full.Name %in% psm, ]$End.Date)){
+      if(length(timelog[timelog$User %in% psm & !is.na(timelog$User) & timelog$Date <= start_dates[start_dates$Full.Name %in% psm, ]$End.Date, ]$is_psm) > 0){
+        timelog[timelog$User %in% psm & !is.na(timelog$User) & timelog$Date <= start_dates[start_dates$Full.Name %in% psm, ]$End.Date, ]$is_psm <- 1 
+      }
+      if(length(timelog[timelog$User %in% psm & !is.na(timelog$User) & timelog$Date > start_dates[start_dates$Full.Name %in% psm, ]$End.Date, ]$is_psm) > 0){
+        timelog[timelog$User %in% psm & !is.na(timelog$User) & timelog$Date > start_dates[start_dates$Full.Name %in% psm, ]$End.Date, ]$is_psm <- 0
+      }
+    }
+  }
+  #case 2: unknown PSMs
+  ps_titles <- c("Senior Professional Services Manager", "Professional Services Manager")
+  if(length(timelog[timelog$User.Title %in% ps_titles & is.na(timelog$is_psm), ]$is_psm) > 0){
+    timelog[timelog$User.Title %in% ps_titles & is.na(timelog$is_psm), ]$is_psm <- 1
+  }
+  
+  #now all relevant time is marked, remove 0 and na time from timelog
+  if(include_cs == F){
+    timelog <- timelog[timelog$is_psm == 1 & !is.na(timelog$is_psm), ]    
+  }
+  
+  #Construct the Period Identifiers for service grouping
+  timelog$filingPeriod <- paste(as.numeric(format(timelog$Date, "%Y")), ceiling(as.numeric(format(timelog$Date, "%m"))/3), sep = "")
+  timelog$reportingPeriod <- ifelse(substr(timelog$filingPeriod, nchar(timelog$filingPeriod), nchar(timelog$filingPeriod)) == 1,
+                                    paste(as.numeric(format(timelog$Date, "%Y")) -1, 4, sep = ""),
+                                    paste(as.numeric(format(timelog$Date, "%Y")), ceiling(as.numeric(format(timelog$Date, "%m"))/3) - 1, sep = ""))
+  
+  #****************************** import role dates
+  #get role dates
+  setwd("C:/R/workspace/source")
+  role_dates <- read.csv("ps_start_dates.csv", header = T, stringsAsFactors = F)
+  print(paste("ps_start_dates.csv", "last updated", round(difftime(Sys.time(), file.info("ps_start_dates.csv")$ctime, units = "days"), digits = 1), "days ago", sep = " "))
+  role_dates[,!(colnames(role_dates) %in% (c("Full.Name")))] <- 
+    lapply(role_dates[,!(colnames(role_dates) %in% (c("Full.Name")))],FUN = as.Date, format = "%m/%d/%Y")
+  
+  #set all time to PSM when the title says psm or sr psm or if the is_psm boolean is 1
+  timelog$role <- NA
+  timelog[timelog$User.Title %in% unique(timelog$User.Title)[grep("Professional", unique(timelog$User.Title))],]$role <- "PSM"
+  timelog[timelog$is_psm %in% 1,]$role <- "PSM"
+  
+  #for those with a start date, set time before to NA
+  for (i in 1:length(role_dates[!is.na(role_dates$Start.Date),]$Full.Name)){
+    psm <- role_dates[!is.na(role_dates$Start.Date),]$Full.Name[i]
+    start <- role_dates[!is.na(role_dates$Start.Date),]$Start.Date[i]
+    if(length(timelog[timelog$User %in% psm & timelog$Date < start, ]$role) > 0){
+      timelog[timelog$User %in% psm & timelog$Date < start, ]$role <- NA
+    }
+  }
+  
+  #for psms promoted to senior, set time forward to Sr PSM
+  for (i in 1:length(role_dates[!is.na(role_dates$to_senior),]$Full.Name)){
+    psm <- role_dates[!is.na(role_dates$to_senior),]$Full.Name[i]
+    promotion_date <- role_dates[!is.na(role_dates$to_senior),]$to_senior[i]
+    if(length(timelog[timelog$User %in% psm & timelog$Date >= promotion_date, ]$role) > 0){
+      timelog[timelog$User %in% psm & timelog$Date >= promotion_date, ]$role <- "Sr PSM"
+    }
+  }
+  
+  #for srs promoted to tms, set time forward to TM
+  for (i in 1:length(role_dates[!is.na(role_dates$to_tm),]$Full.Name)){
+    psm <- role_dates[!is.na(role_dates$to_tm),]$Full.Name[i]
+    promotion_date <- role_dates[!is.na(role_dates$to_tm),]$to_tm[i]
+    if(length(timelog[timelog$User %in% psm & timelog$Date >= promotion_date, ]$role) > 0 ){
+      timelog[timelog$User %in% psm & timelog$Date >= promotion_date, ]$role <- "TM"
+    }
+  }
+  
+  #for tms promoted to director, set time forward to director
+  for (i in 1:length(role_dates[!is.na(role_dates$to_director),]$Full.Name)){
+    psm <- role_dates[!is.na(role_dates$to_director),]$Full.Name[i]
+    promotion_date <- role_dates[!is.na(role_dates$to_director),]$to_director[i]
+    if(length(timelog[timelog$User %in% psm & timelog$Date >= promotion_date, ]$role) > 0){
+      timelog[timelog$User %in% psm & timelog$Date >= promotion_date, ]$role <- "Director"
+    }
+  }
+  
+  #for psms who left PS, set time forward to NA
+  for (i in 1:length(role_dates[!is.na(role_dates$End.Date),]$Full.Name)){
+    psm <- role_dates[!is.na(role_dates$End.Date),]$Full.Name[i]
+    term_date <- role_dates[!is.na(role_dates$End.Date),]$End.Date[i]
+    if(length(timelog[timelog$User %in% psm & timelog$Date >= term_date, ]$role) > 0){
+      timelog[timelog$User %in% psm & timelog$Date >= term_date, ]$role <- NA
+    }
+  }
+  
+  #****************************** /import role dates
+  
+  #aggregate time by billable and non-billable
+  time_billable <- aggregate(Hours ~ Account.Name + reportingPeriod + Billable, FUN = sum, data = timelog)
+  names(time_billable) <- c("Account.Name", "reportingPeriod", "Billable", "Hours") #change names to something meaningful
+  time_billable$xbrl_status <- NA
+  time_billable[time_billable$Billable == 0 & !is.na(time_billable$Billable), ]$xbrl_status <- "Full Service"
+  time_billable[time_billable$Billable == 1  & !is.na(time_billable$Billable), ]$xbrl_status <- "Billable"
+  time_billable <- time_billable[!names(time_billable) %in% "Billable"]
+  #aggregate total time
+  time_total <- aggregate(Hours ~ Account.Name + reportingPeriod, FUN = sum, data = timelog)
+  names(time_total) <- c("Account.Name", "reportingPeriod", "Hours") #change names to something meaningful
+  time_total$xbrl_status <- "Total" #add billable status
+  time_total <- time_total[,names(time_billable)] #rearrange to match ordering in time_by_qtr
+  
+  time_all <- rbind(time_billable, time_total)
+  
+  time_all <- dcast(time_all, Account.Name ~ reportingPeriod + xbrl_status, value.var = "Hours")
+  
+  if(output %in% c("psh")){
+    time_all
+  }else if(output %in% c("simple")){
+    timelog
+  }
+  
+  
+}
+
+import_openair_time <- function(name = "time_entry_detail_report__complete_report.csv", wd = "C:/R/workspace/source"){
+  
+  library(plyr)
+  library(reshape2)
+  setwd("C:/R/workspace/shared")
+  source("import_functions.r")
   
   setwd(wd)
-  netsuite <- read.csv(file, header = F, stringsAsFactors = F)
-  print(paste(file, "last updated", round(difftime(Sys.time(), file.info(file)$ctime, units = "days"), digits = 1), "days ago", sep = " "))
-  netsuite <- netsuite[-1,]
+  openair <- read.csv(name, header = F, stringsAsFactors = F)
+  print(paste(name, "last updated", round(difftime(Sys.time(), file.info(name)$ctime, units = "days")
+                    , digits = 1), "days ago", sep = " "))
+  openair <- openair[-1,]
   
   #populate psm and job to columns a and b
-  for (row in 1:dim(netsuite)[1]){
-    if (netsuite[row, 1] %in% " "){
+  for (row in 1:dim(openair)[1]){
+    if (openair[row, 1] %in% " "){
       
     }else{
-      job = netsuite[row, 1]
+      job = openair[row, 1]
     }
-    if (netsuite[row, 2] %in% " "){
+    if (openair[row, 2] %in% " "){
       
     }else{
-      psm = netsuite[row, 2]
+      psm = openair[row, 2]
     }
-    if (!netsuite[row, 3] %in% " "){
-      netsuite[row, 1] <- job
-      netsuite[row, 2] <- psm
+    if (!openair[row, 3] %in% " "){
+      openair[row, 1] <- job
+      openair[row, 2] <- psm
     }
   }
   #grab row 1 for header and remove
-  names(netsuite) <- netsuite[1,]
-  netsuite <- netsuite[-1,]
+  names(openair) <- openair[1,]
+  openair <- openair[-1,]
   #trim leading psm and job rows
-  names(netsuite) <- gsub("- ","",names(netsuite))
-  names(netsuite) <- gsub(" ",".",names(netsuite))
-  netsuite$services_id_15 <- substr(netsuite$"Project.SFDC.Project.ID",1,15)
+  names(openair) <- gsub("- ","",names(openair))
+  names(openair) <- gsub("[[:punct:]]","",names(openair))
+  names(openair) <- gsub(" ",".",names(openair))
+  openair$services_id_15 <- substr(openair$"Project.SFDC.Project.ID",1,15)
   
   #cast data values
-  netsuite$"Project.Quarter.End.Date.(QED)" <- as.Date(netsuite$"Project.Quarter.End.Date.(QED)", format = "%m/%d/%Y")
-  netsuite$"Project.Filing.Date" <- as.Date(netsuite$"Project.Filing.Date", format = "%m/%d/%Y")
-  netsuite$"Project.Filing.Deadline.Date" <- as.Date(netsuite$"Project.Filing.Deadline.Date", format = "%m/%d/%Y")
+  openair$"Project.Quarter.End.Date.QED" <- as.Date(openair$"Project.Quarter.End.Date.QED", format = "%m/%d/%Y")
+  openair$"Project.Filing.Date" <- as.Date(openair$"Project.Filing.Date", format = "%m/%d/%Y")
+  openair$"Project.Filing.Deadline.Date" <- as.Date(openair$"Project.Filing.Deadline.Date", format = "%m/%d/%Y")
+  openair$"Project..of.Facts" <- as.numeric(openair$"Project..of.Facts")
+  openair$Time.Hours <- as.numeric(openair$Time.Hours)
+  openair$Date <- as.Date(openair$Date, format = "%m/%d/%Y")
   
-  netsuite <- netsuite[!netsuite$services_id_15 %in% "",] #remove header rows from report
+  openair <- openair[!openair$services_id_15 %in% c("", " "),] #remove header rows and non-project related time from report
   
-  #need to dcast with psm, srpsm, tm fields
-  #netsuite$"Job code" <- as.factor(netsuite$"Job code")
-  resources <- dcast(netsuite, services_id_15 ~ Job.code, paste, value.var = "User", collapse = "\n")
-  resources <- resources[!resources$services_id_15 %in% " ",]
-  netsuite <- netsuite[,!names(netsuite) %in% c("Job.code", "User")]
-  netsuite <- merge(netsuite, resources, by = "services_id_15", all.x = T)
+  #Construct the Period Identifiers for service grouping
+  openair$filingPeriod <- paste(as.numeric(format(openair$Project.Filing.Date, "%Y")), ceiling(as.numeric(format(openair$Project.Filing.Date, "%m"))/3), sep = "")
+  openair$reportingPeriod <- paste(as.numeric(format(openair$Project.Quarter.End.Date.QED, "%Y")), ceiling(as.numeric(format(openair$Project.Quarter.End.Date.QED, "%m"))/3), sep = "")
   
-  netsuite <- unique(rbind(source, netsuite))
+  #reverse User names from "last, first" to "first last"
+  resources <- read.csv(textConnection(openair$User), header = F, strip.white=T)
+  openair$User <- paste(resources[,2], resources[,1], sep = " ")
   
-  setwd("C:/R/workspace/netsuite/data")
-  saveRDS(netsuite, file = "aggregate_time.rds")
+  #****************************** construct is_psm
+  setwd('C:/R/workspace/source')
+  start_dates <- read.csv("ps_start_dates.csv", header = T , stringsAsFactors=F)
+  print(paste("ps_start_dates.csv", "last updated", round(difftime(Sys.time(), file.info("ps_start_dates.csv")$ctime, units = "days"), digits = 1), "days ago", sep = " "))
+  start_dates$Start.Date <- as.Date(start_dates$Start.Date, format = "%m/%d/%Y")
+  start_dates$End.Date <- as.Date(start_dates$End.Date, format = "%m/%d/%Y")
   
-  netsuite
+  #need to remove non-psm time. 
+  openair$is_psm <- NA
+  #case 1: Known PSMs
+  openair[openair$User %in% start_dates[is.na(start_dates$Start.Date) & is.na(start_dates$End.Date), ]$Full.Name, ]$is_psm <- 1 #with no movement in position
+  for (psm in start_dates[!is.na(start_dates$Start.Date) | !is.na(start_dates$End.Date), ]$Full.Name) {#need to subset for each psm
+    if (!is.na(start_dates[start_dates$Full.Name %in% psm, ]$Start.Date)){
+      if(length(openair[openair$User %in% psm & !is.na(openair$User) & openair$Date >= start_dates[start_dates$Full.Name %in% psm, ]$Start.Date, ]$is_psm) > 0){
+        openair[openair$User %in% psm & !is.na(openair$User) & openair$Date >= start_dates[start_dates$Full.Name %in% psm, ]$Start.Date, ]$is_psm <- 1
+      }
+      if(length(openair[openair$User %in% psm & !is.na(openair$User) & openair$Date < start_dates[start_dates$Full.Name %in% psm, ]$Start.Date, ]$is_psm) > 0){
+        openair[openair$User %in% psm & !is.na(openair$User) & openair$Date < start_dates[start_dates$Full.Name %in% psm, ]$Start.Date, ]$is_psm <- 0
+      }
+    }
+    if (!is.na(start_dates[start_dates$Full.Name %in% psm, ]$End.Date)){
+      if(length(openair[openair$User %in% psm & !is.na(openair$User) & openair$Date <= start_dates[start_dates$Full.Name %in% psm, ]$End.Date, ]$is_psm) > 0){
+        openair[openair$User %in% psm & !is.na(openair$User) & openair$Date <= start_dates[start_dates$Full.Name %in% psm, ]$End.Date, ]$is_psm <- 1 
+      }
+      if(length(openair[openair$User %in% psm & !is.na(openair$User) & openair$Date > start_dates[start_dates$Full.Name %in% psm, ]$End.Date, ]$is_psm) > 0){
+        openair[openair$User %in% psm & !is.na(openair$User) & openair$Date > start_dates[start_dates$Full.Name %in% psm, ]$End.Date, ]$is_psm <- 0
+      }
+    }
+  }
+  #case 2: unknown PSMs
+  ps_titles <- unique(openair$User.Job.code)[grep("PSM", unique(openair$User.Job.code))]
+  if(length(openair[openair$User.Job.code %in% ps_titles & is.na(openair$is_psm), ]$is_psm) > 0){
+    openair[openair$User.Job.code %in% ps_titles & is.na(openair$is_psm), ]$is_psm <- 1
+  }
+  
+  #now all relevant time is marked, remove 0 and na time from openair  
+  openair <- openair[openair$is_psm %in% 1, ]    
+  
+  
+  #****************************** import role dates
+  #get role dates
+  setwd("C:/R/workspace/source")
+  role_dates <- read.csv("ps_start_dates.csv", header = T, stringsAsFactors = F)
+  print(paste("ps_start_dates.csv", "last updated", round(difftime(Sys.time(), file.info("ps_start_dates.csv")$ctime, units = "days"), digits = 1), "days ago", sep = " "))
+  role_dates[,!(colnames(role_dates) %in% (c("Full.Name")))] <- 
+    lapply(role_dates[,!(colnames(role_dates) %in% (c("Full.Name")))],FUN = as.Date, format = "%m/%d/%Y")
+  
+  #set all time to PSM when the title says psm or sr psm or if the is_psm boolean is 1
+  openair$role <- NA
+  openair[openair$User.Job.code %in% unique(openair$User.Job.code)[grep("PSM", unique(openair$User.Job.code))],]$role <- "PSM"
+  openair[openair$is_psm %in% 1,]$role <- "PSM"
+  
+  #for those with a start date, set time before to NA
+  for (i in 1:length(role_dates[!is.na(role_dates$Start.Date),]$Full.Name)){
+    psm <- role_dates[!is.na(role_dates$Start.Date),]$Full.Name[i]
+    start <- role_dates[!is.na(role_dates$Start.Date),]$Start.Date[i]
+    if(length(openair[openair$User %in% psm & openair$Date < start, ]$role) > 0){
+      openair[openair$User %in% psm & openair$Date < start, ]$role <- NA
+    }
+  }
+  
+  #for psms promoted to senior, set time forward to Sr PSM
+  for (i in 1:length(role_dates[!is.na(role_dates$to_senior),]$Full.Name)){
+    psm <- role_dates[!is.na(role_dates$to_senior),]$Full.Name[i]
+    promotion_date <- role_dates[!is.na(role_dates$to_senior),]$to_senior[i]
+    if(length(openair[openair$User %in% psm & openair$Date >= promotion_date, ]$role) > 0){
+      openair[openair$User %in% psm & openair$Date >= promotion_date, ]$role <- "Sr. PSM"
+    }
+  }
+  
+  #for srs promoted to tms, set time forward to TM
+  for (i in 1:length(role_dates[!is.na(role_dates$to_tm),]$Full.Name)){
+    psm <- role_dates[!is.na(role_dates$to_tm),]$Full.Name[i]
+    promotion_date <- role_dates[!is.na(role_dates$to_tm),]$to_tm[i]
+    if(length(openair[openair$User %in% psm & openair$Date >= promotion_date, ]$role) > 0 ){
+      openair[openair$User %in% psm & openair$Date >= promotion_date, ]$role <- "PSM Team Manager"
+    }
+  }
+  
+  #for tms promoted to director, set time forward to director
+  for (i in 1:length(role_dates[!is.na(role_dates$to_director),]$Full.Name)){
+    psm <- role_dates[!is.na(role_dates$to_director),]$Full.Name[i]
+    promotion_date <- role_dates[!is.na(role_dates$to_director),]$to_director[i]
+    if(length(openair[openair$User %in% psm & openair$Date >= promotion_date, ]$role) > 0){
+      openair[openair$User %in% psm & openair$Date >= promotion_date, ]$role <- "Director"
+    }
+  }
+  
+  #for psms who left PS, set time forward to NA
+  for (i in 1:length(role_dates[!is.na(role_dates$End.Date),]$Full.Name)){
+    psm <- role_dates[!is.na(role_dates$End.Date),]$Full.Name[i]
+    term_date <- role_dates[!is.na(role_dates$End.Date),]$End.Date[i]
+    if(length(openair[openair$User %in% psm & openair$Date >= term_date, ]$role) > 0){
+      openair[openair$User %in% psm & openair$Date >= term_date, ]$role <- NA
+    }
+  }
+  
+  #****************************** /import role dates
+  
+  openair$Billable <- 0
+  openair[openair$Project %in% unique(openair$Project)[grep("Hourly", unique(openair$Project))],]$Billable <- 1
+  openair
+  
 }
