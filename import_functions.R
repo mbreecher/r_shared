@@ -31,7 +31,17 @@ import_timelog <- function(sf_name = "timelog_for_R.csv", oa_name = "time_entry_
   
   #reduce oa timelog and merge the two dataframes
   timelog <- rbind.fill(oa_timelog, sf_timelog)
-  timelog <- timelog[,names(timelog) %in% names(oa_timelog) & names(timelog) %in% names(sf_timelog)]
+  timelog <- timelog[,names(timelog) %in% c(names(oa_timelog), "Related.Service.Id") & names(timelog) %in% names(sf_timelog)]
+  
+  #make name corrections to match salesforce
+  setwd('C:/R/workspace/source')
+  name_changes <- read.csv("sf_oa_name_changes.csv", header = T, stringsAsFactors = F)
+  for (i in 1:dim(name_changes)[1]){
+    loop <- timelog[timelog$User %in% name_changes[i,2],]
+    if(dim(loop)[1] > 0){
+      timelog[timelog$User %in% name_changes[i,2],]$User <- name_changes[i,1]  
+    }
+  }
   timelog
   
 }
@@ -477,7 +487,7 @@ daily
   
 }
 
-import_salesforce_timelog <- function(name = "timelog_for_R.csv", wd = 'C:/R/workspace/source', output = 'simple', include_cs = F){
+import_salesforce_timelog <- function(name = "timelog_for_R.csv", wd = 'C:/R/workspace/source', include_cs = F){
   #import and cleanup timelog
   setwd(wd)
   timelog <- read.csv(name, header = T , stringsAsFactors=F)
@@ -599,30 +609,7 @@ import_salesforce_timelog <- function(name = "timelog_for_R.csv", wd = 'C:/R/wor
     }
   }
   
-  #****************************** /import role dates
-  
-  #aggregate time by billable and non-billable
-  time_billable <- aggregate(Hours ~ Account.Name + reportingPeriod + Billable, FUN = sum, data = timelog)
-  names(time_billable) <- c("Account.Name", "reportingPeriod", "Billable", "Hours") #change names to something meaningful
-  time_billable$xbrl_status <- NA
-  time_billable[time_billable$Billable == 0 & !is.na(time_billable$Billable), ]$xbrl_status <- "Full Service"
-  time_billable[time_billable$Billable == 1  & !is.na(time_billable$Billable), ]$xbrl_status <- "Billable"
-  time_billable <- time_billable[!names(time_billable) %in% "Billable"]
-  #aggregate total time
-  time_total <- aggregate(Hours ~ Account.Name + reportingPeriod, FUN = sum, data = timelog)
-  names(time_total) <- c("Account.Name", "reportingPeriod", "Hours") #change names to something meaningful
-  time_total$xbrl_status <- "Total" #add billable status
-  time_total <- time_total[,names(time_billable)] #rearrange to match ordering in time_by_qtr
-  
-  time_all <- rbind(time_billable, time_total)
-  
-  time_all <- dcast(time_all, Account.Name ~ reportingPeriod + xbrl_status, value.var = "Hours")
-  
-  if(output %in% c("psh")){
-    time_all
-  }else if(output %in% c("simple")){
-    timelog
-  }
+  timelog
   
   
 }
