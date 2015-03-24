@@ -712,10 +712,7 @@ import_openair_time <- function(name = "time_entry_detail_report__complete_repor
   ps_titles <- unique(openair$User.Job.code)[grep("PSM", unique(openair$User.Job.code))]
   if(length(openair[openair$User.Job.code %in% ps_titles & is.na(openair$is_psm), ]$is_psm) > 0){
     openair[openair$User.Job.code %in% ps_titles & is.na(openair$is_psm), ]$is_psm <- 1
-  }
-  
-  #now all relevant time is marked, remove 0 and na time from openair  
-  openair <- openair[openair$is_psm %in% 1, ]    
+  } 
   
   
   #****************************** import role dates
