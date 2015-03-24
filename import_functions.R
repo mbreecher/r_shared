@@ -1,7 +1,7 @@
 #I wanted to separate import and cleanup functions to minimize the noise in the aggregation
 
 
-import_timelog <- function(sf_name = "timelog_for_R.csv", oa_name = "time_entry_detail_report__complete_report.csv"){
+import_timelog <- function(sf_name = "timelog_for_R.csv", oa_name = "time_entry_detail_report__complete_report.csv",include_cs=F){
   library(plyr)
   library(reshape2)
   setwd("C:/R/workspace/shared")
@@ -14,12 +14,15 @@ import_timelog <- function(sf_name = "timelog_for_R.csv", oa_name = "time_entry_
     sf_timelog <- import_salesforce_timelog()
     saveRDS(sf_timelog, file = "sf_time.Rda")  
   }else{
-    sf_timelog <- readRDS(sf_timelog, file = "sf_time.Rda")
+    sf_timelog <- readRDS(file = "sf_time.Rda")
     print("no change to salesforce time, loading timelog data...")
+  }
+  if(include_cs == F){
+    sf_timelog <- sf_timelog[sf_timelog$is_psm == 1 & !is.na(sf_timelog$is_psm), ]    
   }
   
   #import openair time
-  oa_timelog <- import_openair_time()
+  oa_timelog <- import_openair_time(include_cs = include_cs)
   
   # change names to match salesforce convention
   original_names <- c("services_id_15","User.Job.code","User.Department.level.within.User.Department.hierarchy","Account",
@@ -395,7 +398,7 @@ import_daily_hours <- function(name = "daily_hours.csv", wd = 'C:/R/workspace/so
   start_dates$End.Date <- as.Date(start_dates$End.Date, format = "%m/%d/%Y")
   
   #case 1: Known PSMs
-  daily$is_psm <- NA
+  daily$is_psm <- 0
   daily[daily$User %in% start_dates[is.na(start_dates$Start.Date) & is.na(start_dates$End.Date), ]$Full.Name, ]$is_psm <- 1 #psms who are still in PS
   for (psm in start_dates[!is.na(start_dates$Start.Date) | !is.na(start_dates$End.Date), ]$Full.Name) {#need to subset for each psm
     if (!is.na(start_dates[start_dates$Full.Name %in% psm, ]$Start.Date)){
@@ -487,7 +490,7 @@ daily
   
 }
 
-import_salesforce_timelog <- function(name = "timelog_for_R.csv", wd = 'C:/R/workspace/source', include_cs = F){
+import_salesforce_timelog <- function(name = "timelog_for_R.csv", wd = 'C:/R/workspace/source', include_cs = T){
   #import and cleanup timelog
   setwd(wd)
   timelog <- read.csv(name, header = T , stringsAsFactors=F)
@@ -513,7 +516,7 @@ import_salesforce_timelog <- function(name = "timelog_for_R.csv", wd = 'C:/R/wor
   start_dates$End.Date <- as.Date(start_dates$End.Date, format = "%m/%d/%Y")
   
   #need to remove non-psm time. 
-  timelog$is_psm <- NA
+  timelog$is_psm <- 0
   #case 1: Known PSMs
   timelog[timelog$User %in% start_dates[is.na(start_dates$Start.Date) & is.na(start_dates$End.Date), ]$Full.Name, ]$is_psm <- 1 #with no movement in position
   for (psm in start_dates[!is.na(start_dates$Start.Date) | !is.na(start_dates$End.Date), ]$Full.Name) {#need to subset for each psm
@@ -614,7 +617,7 @@ import_salesforce_timelog <- function(name = "timelog_for_R.csv", wd = 'C:/R/wor
   
 }
 
-import_openair_time <- function(name = "time_entry_detail_report__complete_report.csv", wd = "C:/R/workspace/source"){
+import_openair_time <- function(name = "time_entry_detail_report__complete_report.csv", wd = "C:/R/workspace/source", include_cs = F){
   
   library(plyr)
   library(reshape2)
@@ -661,7 +664,12 @@ import_openair_time <- function(name = "time_entry_detail_report__complete_repor
   openair$Time.Hours <- as.numeric(openair$Time.Hours)
   openair$Date <- as.Date(openair$Date, format = "%m/%d/%Y")
   
-  openair <- openair[!openair$services_id_15 %in% c("", " "),] #remove header rows and non-project related time from report
+  if(include_cs == F){
+    openair <- openair[openair$User.Department.level.within.User.Department.hierarchy %in% c("PS"),] #remove header rows and non-project related time from report  
+  }else{
+    openair <- openair[openair$User.Department.level.within.User.Department.hierarchy %in% c("PS", "CS"),] #remove header rows and non-project related time from report  
+  }
+  
   
   #Construct the Period Identifiers for service grouping
   openair$filingPeriod <- paste(as.numeric(format(openair$Project.Filing.Date, "%Y")), ceiling(as.numeric(format(openair$Project.Filing.Date, "%m"))/3), sep = "")
@@ -679,7 +687,7 @@ import_openair_time <- function(name = "time_entry_detail_report__complete_repor
   start_dates$End.Date <- as.Date(start_dates$End.Date, format = "%m/%d/%Y")
   
   #need to remove non-psm time. 
-  openair$is_psm <- NA
+  openair$is_psm <- 0
   #case 1: Known PSMs
   openair[openair$User %in% start_dates[is.na(start_dates$Start.Date) & is.na(start_dates$End.Date), ]$Full.Name, ]$is_psm <- 1 #with no movement in position
   for (psm in start_dates[!is.na(start_dates$Start.Date) | !is.na(start_dates$End.Date), ]$Full.Name) {#need to subset for each psm
@@ -772,6 +780,7 @@ import_openair_time <- function(name = "time_entry_detail_report__complete_repor
   
   openair$Billable <- 0
   openair[openair$Project %in% unique(openair$Project)[grep("Hourly", unique(openair$Project))],]$Billable <- 1
+  openair[openair$Project %in% unique(openair$Project)[grep("Fixed", unique(openair$Project))],]$Billable <- 1
   openair
   
 }
