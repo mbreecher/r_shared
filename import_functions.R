@@ -1,7 +1,7 @@
 #I wanted to separate import and cleanup functions to minimize the noise in the aggregation
 
 
-import_timelog <- function(sf_name = "timelog_for_R.csv", oa_name = "time_entry_detail_report__complete_report.csv",include_cs=F){
+import_timelog <- function(sf_name = "timelog_for_R.csv", oa_name = "time_entry_detail_report__complete_report.csv",include_cs=F, ...){
   library(plyr)
   library(reshape2)
   setwd("C:/R/workspace/shared")
@@ -22,7 +22,7 @@ import_timelog <- function(sf_name = "timelog_for_R.csv", oa_name = "time_entry_
   }
   
   #import openair time
-  oa_timelog <- import_openair_time(include_cs = include_cs)
+  oa_timelog <- import_openair_time(...)
   
   # change names to match salesforce convention
   original_names <- c("services_id_15","User.Job.code","User.Department.level.within.User.Department.hierarchy","Account",
@@ -539,8 +539,8 @@ import_salesforce_timelog <- function(name = "timelog_for_R.csv", wd = 'C:/R/wor
   }
   #case 2: unknown PSMs
   ps_titles <- c("Senior Professional Services Manager", "Professional Services Manager")
-  if(length(timelog[timelog$User.Title %in% ps_titles & is.na(timelog$is_psm), ]$is_psm) > 0){
-    timelog[timelog$User.Title %in% ps_titles & is.na(timelog$is_psm), ]$is_psm <- 1
+  if(length(timelog[timelog$User.Title %in% ps_titles, ]$is_psm) > 0){
+    timelog[timelog$User.Title %in% ps_titles, ]$is_psm <- 1
   }
   
   #now all relevant time is marked, remove 0 and na time from timelog
@@ -710,8 +710,8 @@ import_openair_time <- function(name = "time_entry_detail_report__complete_repor
   }
   #case 2: unknown PSMs
   ps_titles <- unique(openair$User.Job.code)[grep("PSM", unique(openair$User.Job.code))]
-  if(length(openair[openair$User.Job.code %in% ps_titles & is.na(openair$is_psm), ]$is_psm) > 0){
-    openair[openair$User.Job.code %in% ps_titles & is.na(openair$is_psm), ]$is_psm <- 1
+  if(length(openair[openair$User.Job.code %in% ps_titles, ]$is_psm) > 0){
+    openair[openair$User.Job.code %in% ps_titles, ]$is_psm <- 1
   } 
   
   
