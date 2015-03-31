@@ -32,6 +32,9 @@ import_timelog <- function(sf_name = "timelog_for_R.csv", oa_name = "time_entry_
     names(oa_timelog)[names(oa_timelog) %in% original_names[i]] <- new_names[i]
   }
   
+  #exclude openair projects that relate to non-billable time (e.g. TEC or admin)
+  oa_timelog <- oa_timelog[oa_timelog$Service %in% oa_timelog[grep("Fixed", oa_timelog$Service) ,]$Service | !oa_timelog$Service.Type %in% "",]
+  
   #reduce oa timelog and merge the two dataframes
   timelog <- rbind.fill(oa_timelog, sf_timelog)
   timelog <- timelog[,names(timelog) %in% c(names(oa_timelog), "Related.Service.Id") & names(timelog) %in% names(sf_timelog)]
