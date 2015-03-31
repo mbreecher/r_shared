@@ -378,7 +378,42 @@ load_app_filing_data <- function(){
   test <- readRDS("app_filings.Rda")  
 }
 
-import_daily_hours <- function(name = "daily_hours.csv", wd = 'C:/R/workspace/source'){
+import_daily_hours <- function(){
+  library(plyr)
+  library(reshape2)
+  setwd("C:/R/workspace/shared")
+  source("import_functions.r")
+  
+  # Import salesforce time if necessary, otherwise, read from stored rda file
+  setwd('C:/R/workspace/source')
+  if(file.info("daily_hours.csv")$mtime > file.info('sf_time.Rda')$mtime){
+    print("salesforce timelog report has changed, importing salesforce timelog data...")
+    sf_daily <- import_salesforce_daily_hours()
+    saveRDS(sf_daily, file = "sf_daily.Rda")  
+  }else{
+    sf_daily <- readRDS(file = "sf_daily.Rda")
+    print("no change to salesforce daily hours, loading timelog data...")
+  }
+  
+  #import openair time
+  oa_timelog <- import_openair_time()
+  
+  # change names to match salesforce convention
+  original_names <- c("services_id_15","User.Job.code","User.Department.level.within.User.Department.hierarchy","Account",
+                      "Project", "Project.Form.Type", "Project.Project.Type", "Time.Hours","Project.Filing.Date","Project.Filing.Deadline.Date")
+  new_names <- c("Services.ID","User.Title","CS.PS", "Account.Name", "Service", "Form.Type", "Service.Type", "Hours", "Filing.Date", "Filing.Deadline")
+  for(i in 1:length(original_names)){
+    names(oa_timelog)[names(oa_timelog) %in% original_names[i]] <- new_names[i]
+  }
+  
+  #aggregate then reduce oa timelog and merge the two dataframes
+  oa_timelog_agg <- aggregate(Hours ~ Date + User + role + User.Title + is_psm, data = oa_timelog, FUN = sum)
+  timelog <- rbind(oa_timelog_agg, sf_daily)
+  
+  timelog
+}
+
+import_salesforce_daily_hours <- function(name = "daily_hours.csv", wd = 'C:/R/workspace/source'){
   #import and cleanup timelog
   setwd(wd)
   daily <- read.csv(name, header = T , stringsAsFactors=F)
@@ -742,7 +777,7 @@ import_openair_time <- function(name = "time_entry_detail_report__complete_repor
     psm <- role_dates[!is.na(role_dates$to_senior),]$Full.Name[i]
     promotion_date <- role_dates[!is.na(role_dates$to_senior),]$to_senior[i]
     if(length(openair[openair$User %in% psm & openair$Date >= promotion_date, ]$role) > 0){
-      openair[openair$User %in% psm & openair$Date >= promotion_date, ]$role <- "Sr. PSM"
+      openair[openair$User %in% psm & openair$Date >= promotion_date, ]$role <- "Sr PSM"
     }
   }
   
@@ -751,7 +786,7 @@ import_openair_time <- function(name = "time_entry_detail_report__complete_repor
     psm <- role_dates[!is.na(role_dates$to_tm),]$Full.Name[i]
     promotion_date <- role_dates[!is.na(role_dates$to_tm),]$to_tm[i]
     if(length(openair[openair$User %in% psm & openair$Date >= promotion_date, ]$role) > 0 ){
-      openair[openair$User %in% psm & openair$Date >= promotion_date, ]$role <- "PSM Team Manager"
+      openair[openair$User %in% psm & openair$Date >= promotion_date, ]$role <- "TM"
     }
   }
   
