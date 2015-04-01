@@ -48,7 +48,11 @@ import_timelog <- function(sf_name = "timelog_for_R.csv", oa_name = "time_entry_
       timelog[timelog$User %in% name_changes[i,2],]$User <- name_changes[i,1]  
     }
   }
-  timelog
+  
+  #add cik from services data
+  services <- import_services()
+  pairs <- unique(services[,names(services) %in% c("CIK", "Account.Name")])
+  timelog <- merge(timelog, pairs, by = "Account.Name", all.x = T)
   
 }
 
