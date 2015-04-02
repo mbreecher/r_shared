@@ -417,6 +417,16 @@ import_daily_hours <- function(){
   oa_timelog_agg <- aggregate(Hours ~ Date + User + role + User.Title + is_psm, data = oa_timelog, FUN = sum)
   timelog <- rbind(oa_timelog_agg, sf_daily)
   
+  #make name corrections to match salesforce
+  setwd('C:/R/workspace/source')
+  name_changes <- read.csv("sf_oa_name_changes.csv", header = T, stringsAsFactors = F)
+  for (i in 1:dim(name_changes)[1]){
+    loop <- timelog[timelog$User %in% name_changes[i,2],]
+    if(dim(loop)[1] > 0){
+      timelog[timelog$User %in% name_changes[i,2],]$User <- name_changes[i,1]  
+    }
+  }
+  
   timelog
 }
 
