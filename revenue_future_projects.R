@@ -1,7 +1,7 @@
 # import function to read revenue data from database
 get_revenue_data <- function(remove_blank_oppid = T){
   opportunities <- import_opportunities()
-  opportunities <- opportunities[,names(opportunities) %in% c("Line.Item.18.Digit.Id", "List.Price", "Sales.Price")]
+  opportunities <- opportunities[,names(opportunities) %in% c("Line.Item.18.Digit.Id", "List.Price", "Sales.Price", "Close.Date")]
   
   #import 2013Q2+ services per scheduled services
   setwd("C:/R/workspace/shared")
