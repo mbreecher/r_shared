@@ -850,4 +850,9 @@ import_openair_workload <- function(name = "Team_Workload_report_pivot.csv", wd 
   for(i in 1:length(original_names)){
     names(workload)[names(workload) %in% original_names[i]] <- new_names[i]
   }
+  workload$Quarter.End.Date <- as.Date(workload$Quarter.End.Date, format = "%m/%d/%Y")
+  workload$Filing.Date <- as.Date(workload$Filing.Date, format = "%m/%d/%Y")
+  workload$Filing.Deadline <- as.Date(workload$Filing.Deadline, format = "%m/%d/%Y")
+  
+  workload
 }
