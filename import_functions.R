@@ -833,3 +833,21 @@ import_openair_time <- function(name = "time_entry_detail_report__complete_repor
   openair
   
 }
+
+import_openair_workload <- function(name = "Team_Workload_report_pivot.csv", wd = "C:/R/workspace/source"){
+  setwd(wd)
+  workload <- read.csv(name, header = T , stringsAsFactors=F)
+  print(paste(name, "last updated", round(difftime(Sys.time(), file.info(name)$ctime, units = "days"), digits = 1), "days ago", sep = " "))
+  
+  # cleanup names
+  original_names <- c("ï..Date", "Project.Project.owner", "Project.Account","Project.Product","Project.Project.Type",
+                      "Project.Form.Type","Project.Quarter.End.Date..QED.", "Project.Filing.Date", "Project.Filing.Deadline.Date",
+                      "Project.Project.stage", "Project...Complete", "Resources...All.booked.hours", "Projects...All.assigned.hours",
+                      "Timesheets...All.hours")
+  new_names <- c("Date", "Owner", "Account.Name","Product.Name","Project.Type","Form.Type","Quarter.End.Date", "Filing.Date", 
+                 "Filing.Deadline", "Project.Stage", "Project.Complete", "Resources.all.booked.hours", "Projects.all.assigned.hours",
+                 "Timesheets.all.hours")
+  for(i in 1:length(original_names)){
+    names(workload)[names(workload) %in% original_names[i]] <- new_names[i]
+  }
+}
