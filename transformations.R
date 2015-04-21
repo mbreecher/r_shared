@@ -6,7 +6,7 @@ collapsed_opportunities <- function(...){
   opps <- import_opportunities()
   services <- import_services()
   # collapsed_time <- collapsed_time_with_billable(include_incomplete = T)
-  collapsed_time <- collapsed_time()
+  collapsed_time <- collapsed_time(complete = F)
   simple_collapsed <- collapsed_time[,!names(collapsed_time) %in% names(opps)]
   
   result <- merge(opps[!is.na(opps$Line.Item.18.Digit.Id) & !opps$Line.Item.18.Digit.Id %in% c(""),], 
@@ -26,7 +26,7 @@ collapsed_opportunities <- function(...){
   }
   
   names(result)[names(result) %in% "Account.Name"] <- "Opportunity.Account.Name"
-  service_target <- services[,names(services) %in% c("Account.Name", "Services.ID")]
+  service_target <- services[,names(services) %in% c("Account.Name", "Services.ID", "Adjusted", "X18.Digit.Id")]
   result <- merge(result, service_target, by = "Services.ID")
   
   result$monthyear <- format(result$filing.estimate, format = "%y-%m")
@@ -144,7 +144,7 @@ collapsed_time_with_billable <- function(include_incomplete = F){
   export
 }
 
-collapsed_time <- function(){
+collapsed_time <- function(complete = T){
   
   # Pull in import functions
   setwd("C:/R/workspace/shared")
@@ -155,7 +155,10 @@ collapsed_time <- function(){
   timelog <- import_timelog()
   
   #initial exclusions. pre-Q2 2012 time and in-progress or not started services
-  services <- services[services$Status %in% "Completed",]
+  if(complete == T){
+    services <- services[services$Status %in% "Completed",]  
+  }
+  
   timelog <- timelog[timelog$Date <= Sys.Date() & timelog$Date >= as.Date("2012-06-30"),]
   
   collapsed_time <- aggregate(Hours ~ Services.ID + role, FUN = sum, data = timelog)
