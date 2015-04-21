@@ -26,7 +26,7 @@ collapsed_opportunities <- function(...){
   }
   
   names(result)[names(result) %in% "Account.Name"] <- "Opportunity.Account.Name"
-  service_target <- services[,names(services) %in% c("Account.Name", "Services.ID", "Adjusted", "X18.Digit.Id")]
+  service_target <- services[,names(services) %in% c("Account.Name", "Services.ID")]
   result <- merge(result, service_target, by = "Services.ID")
   
   result$monthyear <- format(result$filing.estimate, format = "%y-%m")
