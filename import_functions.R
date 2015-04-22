@@ -297,7 +297,7 @@ import_sec <- function(name = "filing_data.csv", wd ="C:/R/workspace/source"  ){
   facts
 }
 
-import_sales_recommendations <- function(name = "sales_recommendations_for_ps_history.csv" ){
+import_sales_recommendations <- function(name = "sales_recommendations_for_r.csv", open = T, wide = F ){
   setwd('C:/R/workspace/source')
   sales_rec <- read.csv(name, header = T , stringsAsFactors=F)
   
@@ -308,14 +308,21 @@ import_sales_recommendations <- function(name = "sales_recommendations_for_ps_hi
   sales_rec$Service.QED <- as.Date(sales_rec$Service.QED, format = "%m/%d/%Y")
   sales_rec <- sales_rec[!is.na(sales_rec$Service.QED),]
   sales_rec$period <- paste(as.numeric(format(sales_rec$Service.QED, "%Y")), ceiling(as.numeric(format(sales_rec$Service.QED, "%m"))/3) , sep = "")
-  
-  svc_by_qtr <- aggregate(sales_rec$Product, by=list(sales_rec$Account.Name, sales_rec$period), paste, collapse = "\n")
-  names(svc_by_qtr) <- c("Account.Name", "period", "Services")
-  result <- dcast(svc_by_qtr, Account.Name ~ period)
-  for (i in 1:length(names(result)[grep('[1-9]+', names(result), perl = T)])) {
-       names(result)[grep('[1-9]+', names(result), perl = T)][i] <- 
-         paste(names(result)[grep('[1-9]+', names(result), perl = T)][i] , "Sales Rec", collapse = "\n")
+  if(open == T){
+    sales_rec <- sales_rec[sales_rec$Recomendation.Status %in% unique(sales_rec$Recomendation.Status)[grep('Closed', unique(sales_rec$Recomendation.Status), fixed = T)],]
   }
+  if(wide == T){
+    svc_by_qtr <- aggregate(sales_rec$Product, by=list(sales_rec$Account.Name, sales_rec$period), paste, collapse = "\n")
+    names(svc_by_qtr) <- c("Account.Name", "period", "Services")
+    result <- dcast(svc_by_qtr, Account.Name ~ period)
+    for (i in 1:length(names(result)[grep('[1-9]+', names(result), perl = T)])) {
+      names(result)[grep('[1-9]+', names(result), perl = T)][i] <- 
+        paste(names(result)[grep('[1-9]+', names(result), perl = T)][i] , "Sales Rec", collapse = "\n")
+    }  
+  }else{
+    result <- sales_rec
+  }
+    
   result
 }
 
