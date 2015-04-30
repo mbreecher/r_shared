@@ -297,7 +297,7 @@ import_sec <- function(name = "filing_data.csv", wd ="C:/R/workspace/source"  ){
   facts
 }
 
-import_sales_recommendations <- function(name = "sales_recommendations_for_r.csv", open = T, wide = F ){
+import_sales_recommendations <- function(name = "sales_recommendations_for_r.csv", include_closed = T, wide = F ){
   setwd('C:/R/workspace/source')
   sales_rec <- read.csv(name, header = T , stringsAsFactors=F)
   
@@ -308,7 +308,7 @@ import_sales_recommendations <- function(name = "sales_recommendations_for_r.csv
   sales_rec$Service.QED <- as.Date(sales_rec$Service.QED, format = "%m/%d/%Y")
   sales_rec <- sales_rec[!is.na(sales_rec$Service.QED),]
   sales_rec$period <- paste(as.numeric(format(sales_rec$Service.QED, "%Y")), ceiling(as.numeric(format(sales_rec$Service.QED, "%m"))/3) , sep = "")
-  if(open == T){
+  if(include_closed == F){
     sales_rec <- sales_rec[sales_rec$Recomendation.Status %in% unique(sales_rec$Recomendation.Status)[grep('Closed', unique(sales_rec$Recomendation.Status), fixed = T)],]
   }
   if(wide == T){
@@ -835,7 +835,7 @@ import_openair_time <- function(name = "time_entry_detail_report__complete_repor
   #****************************** /import role dates
   
   openair$Billable <- 0
-  openair[openair$Project %in% unique(openair$Project)[grep("Hourly", unique(openair$Project))],]$Billable <- 1
+  openair[openair$Project %in% unique(openair$Project)[grep("Hour", unique(openair$Project))],]$Billable <- 1
   openair[openair$Project %in% unique(openair$Project)[grep("Fixed", unique(openair$Project))],]$Billable <- 1
   openair
   
