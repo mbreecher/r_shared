@@ -56,7 +56,7 @@ import_timelog <- function(sf_name = "timelog_for_R.csv", oa_name = "time_entry_
   
 }
 
-import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/workspace/source', output = 'simple'){
+import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/workspace/source', output = 'simple', include_hourly = F){
     ##import services report
     setwd(wd)
     services <- read.csv(name, header = T , stringsAsFactors=F)
@@ -83,6 +83,10 @@ import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/w
     services$Filing.Date <- as.Date(services$Filing.Date, format = "%m/%d/%Y")
     services$Next.Filing.Date <- as.Date(services$Next.Filing.Date, format = "%m/%d/%Y")
     services$Filing.Deadline <- as.Date(services$Filing.Deadline, format = "%m/%d/%Y")
+    services$Created.Date <- as.Date(services$Created.Date, format = "%m/%d/%Y")
+    services$Date.Completed <- as.Date(services$Date.Completed, format = "%m/%d/%Y")
+    services$service_duration <- as.numeric(services$Date.Completed - services$Created.Date)
+    services[services$service_duration < 0 & !is.na(services$service_duration),]$service_duration <- NA
     services$Year.End <- format(services$Year.End, format = "%Y-%U")
     
     #update estimated hours manually 
@@ -116,15 +120,19 @@ import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/w
     unique_customers <- unique_customers[,base_info]
     
     # logic to calculate filing period and reporting period
-    services <- services[!is.na(services$Quarter.End), ] #remove services without quarter ends (can't place them)
+    if(include_hourly == F){
+      services <- services[!is.na(services$Quarter.End), ] #remove services without quarter ends (can't place them)  
+      services <- services[!(services$Service.Type %in% c('Reserve Hours', 'Other', 'Training', '')), ] #Remove Reserve Projects
+    }else{
+      services <- services[!(services$Service.Type %in% c('Training')), ] #Remove Training Projects
+    }
+    
     #remove CS migrations for PSH, but not general case
     if(output %in% c("psh")){
       services <- services[!(services$CS.PS %in% c('CS')),] #remove all CS services.
     }else if(output %in% c("simple", "expanded")){
       services <- services[!(services$CS.PS %in% c('CS') & !(services$Service.Type %in% "Migration")),] #remove all CS services.
     }
-    
-    services <- services[!(services$Service.Type %in% c('Reserve Hours', 'Other', 'Training', '')), ] #Remove Reserve Projects
     
     #calculate filing deadline estimate for all projects
     #for services with form type and registrant type, set reporting offset, then calculate filing.estimate 
