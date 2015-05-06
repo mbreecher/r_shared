@@ -1,10 +1,10 @@
-collapsed_opportunities <- function(...){
+collapsed_opportunities <- function(){
   setwd("C:/R/workspace/shared")
   source("import_functions.r")
   source("transformations.r")
   
   opps <- import_opportunities()
-  services <- import_services(...)
+  services <- import_services()
   # collapsed_time <- collapsed_time_with_billable(include_incomplete = T)
   collapsed_time <- collapsed_time(complete = F, ...)
   simple_collapsed <- collapsed_time[,!names(collapsed_time) %in% names(opps)]
@@ -145,14 +145,14 @@ collapsed_time_with_billable <- function(include_incomplete = F){
   export
 }
 
-collapsed_time <- function(complete = T, ...){
+collapsed_time <- function(complete = T){
   
   # Pull in import functions
   setwd("C:/R/workspace/shared")
   source("import_functions.R")
   
   #import services and include customer status = none
-  services <- import_services(...)
+  services <- import_services()
   timelog <- import_timelog()
   
   #initial exclusions. pre-Q2 2012 time and in-progress or not started services
