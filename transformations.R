@@ -168,7 +168,7 @@ collapsed_time <- function(complete = T, ...){
   collapsed_time$Hours <- rowSums(collapsed_time[,!names(collapsed_time) %in% c("Services.ID")])
   collapsed_history <- merge(services, collapsed_time, "Services.ID", all.x = T)
   
-  collapsed_history <- collapsed_history[collapsed_history$filing.estimate >= as.Date("2012-06-30"),]
+  #collapsed_history <- collapsed_history[collapsed_history$filing.estimate >= as.Date("2012-06-30"),]
   collapsed_history
 }
 
