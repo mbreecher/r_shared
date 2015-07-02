@@ -73,6 +73,7 @@ import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/w
     
     #cleanup names and data values
     names(services)[names(services) %in% c("Account..Account.Name")] <- "Account.Name"
+    names(services)[names(services) %in% c("Account..18.Digit.ID")] <- "Account.ID"
     names(services)[names(services) %in% c("PSM..Full.Name")] <- "PSM"
     names(services)[names(services) %in% c("Sr.PSM..Full.Name")] <- "Sr.PSM"
     names(services)[names(services) %in% c("CSM..Full.Name")] <- "CSM"
@@ -81,7 +82,7 @@ import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/w
     names(services)[names(services) %in% c("Sr.Team.Mgr.PS..Full.Name")] <- "PS.TM"
     names(services)[names(services) %in% c("Churned.Effective.Date")] <- "Churn.Date"
     services$Form.Type[services$Form.Type == 'N/A' & !is.na(services$Form.Type)] <- NA
-    services$Goodwill.Hours.Available[services$Goodwill.Hours.Available %in% c("0")] <- NA
+    #services$Goodwill.Hours.Available[services$Goodwill.Hours.Available %in% c("0")] <- NA  
     services$Quarter.End <- as.Date(services$Quarter.End, format = "%m/%d/%Y")
     services$Filing.Date <- as.Date(services$Filing.Date, format = "%m/%d/%Y")
     services$Next.Filing.Date <- as.Date(services$Next.Filing.Date, format = "%m/%d/%Y")
@@ -103,7 +104,7 @@ import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/w
     }
     
     #build a lits of unique customers and customer data
-    base_info <- c("Account.Name", "CIK", "CSM", "Sr.CSM", "PSM", "Sr.PSM", "Churn.Date", "Year.End", "XBRL.Status", "Goodwill.Hours.Available")
+    base_info <- c("Account.Name", "Account.ID", "CIK", "CSM", "Sr.CSM", "PSM", "Sr.PSM", "Churn.Date", "Year.End", "XBRL.Status")
     #certain customer service lin items don't populate account info. We need to do that manually to prevent data duplication
     account_data <- services[,colnames(services) %in% base_info]
     account_data <- unique(account_data)
@@ -188,18 +189,17 @@ import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/w
     services$CIK <- as.numeric(services$CIK)
     services$Churn.Date <- as.Date(services$Churn.Date, format = "%m/%d/%Y")
     
-    svc_by_qtr <- aggregate(services$Service.Name, by=list(services$Account.Name, services$reportingPeriod), paste, collapse = "\n")
-    names(svc_by_qtr) <- c("Account.Name", "reportingPeriod", "Services")
-    svc_by_qtr <- dcast(svc_by_qtr, Account.Name ~ reportingPeriod)
-    #remove?
-    svc_by_qtr <- sapply(svc_by_qtr, function(x) ifelse(x %in% c("NULL"), NA, x)) #change NULLs produced by dcast into NAs
-    
-    #join unique customers with dcast services    
-    merged <- merge(unique_customers, svc_by_qtr, by = "Account.Name", all.x = T)
-    merged <- merged[order(merged$Account.Name), ]
-    
     
 	if(output %in% c("psh")){
+	  svc_by_qtr <- aggregate(services$Service.Name, by=list(services$Account.Name, services$reportingPeriod), paste, collapse = "\n")
+	  names(svc_by_qtr) <- c("Account.Name", "reportingPeriod", "Services")
+	  svc_by_qtr <- dcast(svc_by_qtr, Account.Name ~ reportingPeriod)
+	  #remove?
+	  svc_by_qtr <- sapply(svc_by_qtr, function(x) ifelse(x %in% c("NULL"), NA, x)) #change NULLs produced by dcast into NAs
+	  
+	  #join unique customers with dcast services    
+	  merged <- merge(unique_customers, svc_by_qtr, by = "Account.Name", all.x = T)
+	  merged <- merged[order(merged$Account.Name), ]
 		merged[!(merged$XBRL.Status %in% c("None")),]
 	}else if(output %in% c("simple", "expanded")){
 		services
