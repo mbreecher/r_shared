@@ -184,6 +184,7 @@ weekly_time <- function(){
   
   #import services and include customer status = none
   services <- import_services()
+  services <- services[services$Status %in% "Completed",]
   timelog <- import_timelog()
   
   timelog$logged_week_num <- as.numeric(format(timelog$Date, format = "%U"))

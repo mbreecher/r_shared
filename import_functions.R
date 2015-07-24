@@ -333,6 +333,8 @@ import_hierarchy <- function(name = "hierarchy.csv"){
 }
 
 import_app_filing_data <- function(name = "app_filing_data.csv", wd = "C:/R/workspace/source"){
+  print ("this function has been deprecated")
+  print ("please use 'load_app_filing_data'")
   setwd(wd)
   app_data <- read.csv(name, header = T, stringsAsFactors = F)
   print(paste(name, "last updated", round(difftime(Sys.time(), file.info(name)$ctime, units = "days"), digits = 1), "days ago", sep = " "))
