@@ -57,6 +57,7 @@ import_timelog <- function(sf_name = "timelog_for_R.csv", oa_name = "time_entry_
   #unify folks who had a name change
   timelog[grep("Winkle", timelog$User),]$User <- "Winkle Manzano"
   timelog[grep("Farah", timelog$User),]$User <- "Farah Hashi"
+  timelog
 }
 
 import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/workspace/source', output = 'simple', include_hourly = F){
