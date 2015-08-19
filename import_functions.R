@@ -55,8 +55,8 @@ import_timelog <- function(sf_name = "timelog_for_R.csv", oa_name = "time_entry_
   timelog <- merge(timelog, pairs, by = "Account.Name", all.x = T)
   
   #unify folks who had a name change
-  timelog[grep("Winkle", timelog$User),]$User <- "Winkle Manzano"
-  timelog[grep("Farah", timelog$User),]$User <- "Farah Hashi"
+  timelog[grep("Winkle", timelog$User),]$User <- "Winkle Manzano-Tipay"
+  timelog[grep("Farah", timelog$User),]$User <- "Farah Ali"
   timelog
 }
 
@@ -192,6 +192,10 @@ import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/w
                                       paste(as.numeric(format(services$filing.estimate, "%Y")), ceiling(as.numeric(format(services$filing.estimate, "%m"))/3) - 1, sep = ""))
     services$CIK <- as.numeric(services$CIK)
     services$Churn.Date <- as.Date(services$Churn.Date, format = "%m/%d/%Y")
+    
+    timelog[grep("Winkle", timelog$User),]$User <- "Winkle Manzano"
+    timelog[grep("Farah", timelog$User),]$User <- "Farah Hashi"
+    timelog
     
     
 	if(output %in% c("psh")){
