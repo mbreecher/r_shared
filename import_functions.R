@@ -193,9 +193,12 @@ import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/w
     services$CIK <- as.numeric(services$CIK)
     services$Churn.Date <- as.Date(services$Churn.Date, format = "%m/%d/%Y")
     
-    timelog[grep("Winkle", timelog$User),]$User <- "Winkle Manzano"
-    timelog[grep("Farah", timelog$User),]$User <- "Farah Hashi"
-    timelog
+    if(length(services[grep("Winkle", services$PSM),]$PSM) > 1){
+      services[grep("Winkle", services$PSM),]$PSM <- "Winkle Manzano-Tipay"  
+    }
+    if(length(services[grep("Farah", services$Sr.PSM),]$Sr.PSM) > 1){
+      services[grep("Farah", services$Sr.PSM),]$Sr.PSM <- "Farah Ali"  
+    }
     
     
 	if(output %in% c("psh")){
