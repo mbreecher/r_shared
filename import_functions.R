@@ -57,6 +57,7 @@ import_timelog <- function(sf_name = "timelog_for_R.csv", oa_name = "time_entry_
   #unify folks who had a name change
   timelog[grep("Winkle", timelog$User),]$User <- "Winkle Manzano-Tipay"
   timelog[grep("Farah", timelog$User),]$User <- "Farah Ali"
+  timelog[grep("Gresham", timelog$User),]$User <- "Kim Gresham"
   timelog
 }
 
@@ -198,6 +199,9 @@ import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/w
     }
     if(length(services[grep("Farah", services$Sr.PSM),]$Sr.PSM) > 1){
       services[grep("Farah", services$Sr.PSM),]$Sr.PSM <- "Farah Ali"  
+    }
+    if(length(services[grep("Gresham", services$PSM),]$PSM) > 1){
+      services[grep("Gresham", services$PSM),]$PSM <- "Kim Gresham"  
     }
     
     
