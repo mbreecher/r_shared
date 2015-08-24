@@ -406,7 +406,10 @@ import_daily_hours <- function(){
       timelog[timelog$User %in% name_changes[i,2],]$User <- name_changes[i,1]  
     }
   }
-  
+  #unify folks who had a name change
+  timelog[grep("Winkle", timelog$User),]$User <- "Winkle Manzano-Tipay"
+  timelog[grep("Farah", timelog$User),]$User <- "Farah Ali"
+  timelog[grep("Gresham", timelog$User),]$User <- "Kim Gresham"
   timelog
 }
 
