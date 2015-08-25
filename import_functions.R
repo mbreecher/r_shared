@@ -1,7 +1,7 @@
 #I wanted to separate import and cleanup functions to minimize the noise in the aggregation
 
 
-import_timelog <- function(sf_name = "timelog_for_R.csv", oa_name = "time_entry_detail_report__complete_report.csv",include_cs=F, ...){
+import_timelog <- function(sf_name = "timelog_for_R.csv", oa_name = "time_entry_detail_report__complete_report.csv",include_cs=F, exclude_hourly = T, ...){
   library(plyr)
   library(reshape2)
   setwd("C:/R/workspace/shared")
@@ -25,15 +25,21 @@ import_timelog <- function(sf_name = "timelog_for_R.csv", oa_name = "time_entry_
   oa_timelog <- import_openair_time(...)
   
   # change names to match salesforce convention
-  original_names <- c("services_id_15","User.Job.code","User.Department.level.within.User.Department.hierarchy","Account",
+  original_names <- c("services_id_15","User.Job.code","User.Department.level.within.User.Department.hierarchy","Account", "Project.owner",
                       "Project", "Project.Form.Type", "Project.Project.Type", "Time.Hours","Project.Filing.Date","Project.Filing.Deadline.Date")
-  new_names <- c("Services.ID","User.Title","CS.PS", "Account.Name", "Service", "Form.Type", "Service.Type", "Hours", "Filing.Date", "Filing.Deadline")
+  new_names <- c("Services.ID","User.Title","CS.PS", "Account.Name", "Sr.PSM", "Service", "Form.Type", "Service.Type", "Hours", "Filing.Date", "Filing.Deadline")
   for(i in 1:length(original_names)){
     names(oa_timelog)[names(oa_timelog) %in% original_names[i]] <- new_names[i]
   }
   
   #exclude openair projects that relate to non-billable time (e.g. TEC or admin)
-  oa_timelog <- oa_timelog[oa_timelog$Service %in% oa_timelog[grep("Fixed", oa_timelog$Service) ,]$Service | !oa_timelog$Service.Type %in% "",]
+  if(exclude_hourly == T){
+    oa_timelog <- oa_timelog[oa_timelog$Service %in% oa_timelog[grep("Fixed", oa_timelog$Service) ,]$Service | !oa_timelog$Service.Type %in% "",]  
+  }
+  
+  # logic to include Project.owner (renamed as Sr.PSM) in salesforce timelog
+  sf_timelog$Sr.PSM <- ""
+  oa_timelog$Sr.PSM[oa_timelog$Sr.PSM %in% "Data Science API"] <- ""
   
   #reduce oa timelog and merge the two dataframes
   timelog <- rbind.fill(oa_timelog, sf_timelog)
@@ -713,6 +719,10 @@ import_openair_time <- function(name = "time_entry_detail_report__complete_repor
   #reverse User names from "last, first" to "first last"
   resources <- read.csv(textConnection(openair$User), header = F, strip.white=T)
   openair$User <- paste(resources[,2], resources[,1], sep = " ")
+  
+  #reverse Project.owner names from "last, first" to "first last"
+  resources <- read.csv(textConnection(openair$Project.owner), header = F, strip.white=T)
+  openair$Project.owner[!openair$Project.owner %in% ""] <- paste(resources[,2], resources[,1], sep = " ")
   
   #****************************** construct is_psm
   setwd('C:/R/workspace/source')
