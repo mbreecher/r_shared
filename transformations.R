@@ -145,7 +145,7 @@ collapsed_time_with_billable <- function(include_incomplete = F){
   export
 }
 
-collapsed_time <- function(complete = T, ...){
+collapsed_time <- function(complete = T){
   
   # Pull in import functions
   setwd("C:/R/workspace/shared")
@@ -153,7 +153,7 @@ collapsed_time <- function(complete = T, ...){
   
   #import services and include customer status = none
   services <- import_services()
-  timelog <- import_timelog(...)
+  timelog <- import_timelog()
   
   #initial exclusions. pre-Q2 2012 time and in-progress or not started services
   if(complete == T){

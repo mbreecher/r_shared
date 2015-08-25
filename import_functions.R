@@ -1,7 +1,7 @@
 #I wanted to separate import and cleanup functions to minimize the noise in the aggregation
 
 
-import_timelog <- function(sf_name = "timelog_for_R.csv", oa_name = "time_entry_detail_report__complete_report.csv",include_cs=F, exclude_hourly = T, ...){
+import_timelog <- function(sf_name = "timelog_for_R.csv", oa_name = "time_entry_detail_report__complete_report.csv",include_cs=F, ...){
   library(plyr)
   library(reshape2)
   setwd("C:/R/workspace/shared")
@@ -33,11 +33,8 @@ import_timelog <- function(sf_name = "timelog_for_R.csv", oa_name = "time_entry_
   }
   
   #exclude openair projects that relate to non-billable time (e.g. TEC or admin)
-  if(exclude_hourly == T){
-    oa_timelog <- oa_timelog[oa_timelog$Service %in% oa_timelog[grep("Fixed", oa_timelog$Service) ,]$Service | !oa_timelog$Service.Type %in% "",]  
-  }else{
-    oa_timelog[oa_timelog$Service %in% oa_timelog[grep("Fixed", oa_timelog$Service) ,],]$Service.Type <- "Hourly" 
-  }
+  
+  oa_timelog <- oa_timelog[oa_timelog$Service %in% oa_timelog[grep("Fixed", oa_timelog$Service) ,]$Service | !oa_timelog$Service.Type %in% "",]  
   
   # logic to include Project.owner (renamed as Sr.PSM) in salesforce timelog
   sf_timelog$Sr.PSM <- ""
