@@ -35,6 +35,8 @@ import_timelog <- function(sf_name = "timelog_for_R.csv", oa_name = "time_entry_
   #exclude openair projects that relate to non-billable time (e.g. TEC or admin)
   if(exclude_hourly == T){
     oa_timelog <- oa_timelog[oa_timelog$Service %in% oa_timelog[grep("Fixed", oa_timelog$Service) ,]$Service | !oa_timelog$Service.Type %in% "",]  
+  }else{
+    oa_timelog[oa_timelog$Service %in% oa_timelog[grep("Fixed", oa_timelog$Service) ,],]$Service.Type <- "Hourly" 
   }
   
   # logic to include Project.owner (renamed as Sr.PSM) in salesforce timelog
