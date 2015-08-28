@@ -851,3 +851,30 @@ import_openair_workload <- function(name = "Team_Workload_report_pivot.csv", wd 
   
   workload
 }
+
+import_openair_booked <- function(name = "PS_Booked_Hours_by_User_Job_Code_Project_report_pivot.csv", wd = "C:/R/workspace/source"){
+  setwd(wd)
+  booked <- read.csv(name, header = T , stringsAsFactors=F)
+  print(paste(name, "last updated", round(difftime(Sys.time(), file.info(name)$mtime, units = "days"), digits = 1), "days ago", sep = " "))
+  
+  # cleanup names
+  original_names <- c("ï..Date","Company","Job.code","User","Project","Project.Account",
+                      "Project.Project.owner","Project.Product","Project.Project.Type",
+                      "Project.Form.Type","Project.Quarter.End.Date..QED.","Project.Project.stage",
+                      "Project.SFDC.Project.ID","Project.Filing.Date","Project.Filing.Deadline.Date",
+                      "Project.Account...Year.End.Date","Project.Salesforce.Opportunity.ID",
+                      "Project.Project.Department.hierarchy.node","Resources...All.booked.hours")
+  new_names <- c("Date","Company","Job.code","User","Project","Project.Account",
+                 "Project.owner","Product","Project.Type",
+                 "Form.Type","Quarter.End.Date","Project.stage",
+                 "Services.ID","Filing.Date","Filing.Deadline",             
+                 "Year.End","Opportunity.ID","Department","booked.hours")
+  for(i in 1:length(original_names)){
+    names(booked)[names(booked) %in% original_names[i]] <- new_names[i]
+  }
+  booked$Quarter.End.Date <- as.Date(booked$Quarter.End.Date, format = "%m/%d/%Y")
+  booked$Filing.Date <- as.Date(booked$Filing.Date, format = "%m/%d/%Y")
+  booked$Filing.Deadline <- as.Date(booked$Filing.Deadline, format = "%m/%d/%Y")
+  
+  booked
+}
