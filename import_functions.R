@@ -867,7 +867,7 @@ import_openair_booked <- function(name = "PS_Booked_Hours_by_User_Job_Code_Proje
   new_names <- c("Date","Company","Job.code","User","Project","Project.Account",
                  "Project.owner","Product","Project.Type",
                  "Form.Type","Quarter.End.Date","Project.stage",
-                 "Services.ID","Filing.Date","Filing.Deadline",             
+                 "Services.ID.Long","Filing.Date","Filing.Deadline",             
                  "Year.End","Opportunity.ID","Department","booked.hours")
   for(i in 1:length(original_names)){
     names(booked)[names(booked) %in% original_names[i]] <- new_names[i]
@@ -875,6 +875,7 @@ import_openair_booked <- function(name = "PS_Booked_Hours_by_User_Job_Code_Proje
   booked$Quarter.End.Date <- as.Date(booked$Quarter.End.Date, format = "%m/%d/%Y")
   booked$Filing.Date <- as.Date(booked$Filing.Date, format = "%m/%d/%Y")
   booked$Filing.Deadline <- as.Date(booked$Filing.Deadline, format = "%m/%d/%Y")
+  booked$Services.ID <- substr(booked$Services.ID.Long, 1, 15)
   
   booked
 }
