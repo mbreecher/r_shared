@@ -25,9 +25,9 @@ import_timelog <- function(sf_name = "timelog_for_R.csv", oa_name = "time_entry_
   oa_timelog <- import_openair_time(...)
   
   # change names to match salesforce convention
-  original_names <- c("services_id_15","User.Job.code","User.Department.level.within.User.Department.hierarchy","Account", "Project.owner",
+  original_names <- c("services_id_15","User.Job.code","User.Department.level.within.User.Department.hierarchy","Account",
                       "Project", "Project.Form.Type", "Project.Project.Type", "Time.Hours","Project.Filing.Date","Project.Filing.Deadline.Date")
-  new_names <- c("Services.ID","User.Title","CS.PS", "Account.Name", "Sr.PSM", "Service", "Form.Type", "Service.Type", "Hours", "Filing.Date", "Filing.Deadline")
+  new_names <- c("Services.ID","User.Title","CS.PS", "Account.Name", "Service", "Form.Type", "Service.Type", "Hours", "Filing.Date", "Filing.Deadline")
   for(i in 1:length(original_names)){
     names(oa_timelog)[names(oa_timelog) %in% original_names[i]] <- new_names[i]
   }
@@ -36,9 +36,9 @@ import_timelog <- function(sf_name = "timelog_for_R.csv", oa_name = "time_entry_
   
   oa_timelog <- oa_timelog[oa_timelog$Service %in% oa_timelog[grep("Fixed", oa_timelog$Service) ,]$Service | !oa_timelog$Service.Type %in% "",]  
   
-  # logic to include Project.owner (renamed as Sr.PSM) in salesforce timelog
-  sf_timelog$Sr.PSM <- ""
-  oa_timelog$Sr.PSM[oa_timelog$Sr.PSM %in% "Data Science API"] <- ""
+  # logic to include Project.owner in salesforce timelog
+  sf_timelog$Project.owner <- ""
+  oa_timelog$Project.owner[oa_timelog$Project.owner %in% "Data Science API"] <- ""
   
   #reduce oa timelog and merge the two dataframes
   timelog <- rbind.fill(oa_timelog, sf_timelog)
@@ -387,6 +387,9 @@ import_daily_hours <- function(){
     print("no change to salesforce daily hours, loading timelog data...")
   }
   
+  # add Sr.PSM to sf_daily
+  sf_daily$Project.owner <- ""
+  
   #import openair time
   oa_timelog <- import_openair_time()
   
@@ -399,7 +402,7 @@ import_daily_hours <- function(){
   }
   
   #aggregate then reduce oa timelog and merge the two dataframes
-  oa_timelog_agg <- aggregate(Hours ~ Date + User + role + User.Title + is_psm, data = oa_timelog, FUN = sum)
+  oa_timelog_agg <- aggregate(Hours ~ Date + User + Project.owner + role + User.Title + is_psm, data = oa_timelog, FUN = sum)
   timelog <- rbind(oa_timelog_agg, sf_daily)
   
   #make name corrections to match salesforce
