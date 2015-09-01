@@ -879,3 +879,18 @@ import_openair_booked <- function(name = "PS_Booked_Hours_by_User_Job_Code_Proje
   
   booked
 }
+
+import_salesforce_filing_data <-function(name = "salesforce_filing_data.csv", wd = "C:/R/workspace/source"){
+    setwd(wd)
+    workload <- read.csv(name, header = T , stringsAsFactors=F)
+    print(paste(name, "last updated", round(difftime(Sys.time(), file.info(name)$mtime, units = "days"), digits = 1), "days ago", sep = " "))
+    
+    original_names <- c("SEC.Filing..SEC.Filing.Name","Account..Account.Name")
+    new_names <- c("Filing.Name","Account.Name")
+    for(i in 1:length(original_names)){
+      names(workload)[names(workload) %in% original_names[i]] <- new_names[i]
+    }
+    
+    workload$Filing.Date <- as.Date(workload$Filing.Date, format = "%m/%d/%Y")
+    workload
+}
