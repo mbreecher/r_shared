@@ -19,7 +19,7 @@ timelog_with_status <- function(...){
   missing_yed <- unique(missing_yed)
   
   #initial exclusions. pre-Q2 2013 time and in-progress or not started services
-  services <- services[services$Status %in% "Completed",]
+#   services <- services[services$Status %in% "Completed",]
   timelog <- timelog[timelog$Date <= Sys.Date() & timelog$Date > as.Date("2013-06-30"),]
   
   timelog$monthyear <- format(timelog$Date, format = "%y-%m")
@@ -40,18 +40,17 @@ timelog_with_status <- function(...){
     data.frame(year_end = as.Date(min(unique(year_end))))
   })
   timelog_with_ye <- merge(timelog, year_end_df, by = c("Account.Name"))
+  timelog_with_ye$yearmonth <- format(timelog_with_ye$Date, format = "%Y-%m")
   
-  service_status <- ddply(timelog_with_ye, .var = c("Account.Name", "Date"), .fun = function(x){
+  service_status <- ddply(timelog_with_ye, .var = c("Account.Name", "yearmonth"), .fun = function(x){
     type <- "DIY"
     #for account-date set, carve out services whose 'filing window' would line up with this time
     current_services <- unique(services[services$Account.Name %in% unique(x$Account.Name) & 
-                                          services$Quarter.End <= unique(x$Date) &
-                                          services$filing.estimate >= unique(x$Date) &
-                                          !is.na(unique(x$Date)),]$Service.Type)
+                                          services$Quarter.End <= max(unique(x$Date)) &
+                                          services$filing.estimate >= min(unique(x$Date)),]$Service.Type)
     current_forms <- unique(services[services$Account.Name %in% unique(x$Account.Name) & 
-                                       services$Quarter.End <= unique(x$Date) &
-                                       services$filing.estimate >= unique(x$Date) &
-                                       !is.na(unique(x$Date)),]$Form.Type)
+                                       services$Quarter.End <= max(unique(x$Date)) &
+                                       services$filing.estimate >= min(unique(x$Date)),]$Form.Type)
     
     if(length(current_services) > 0){
       if(TRUE %in% (current_services %in% full_service_types)){
@@ -70,7 +69,7 @@ timelog_with_status <- function(...){
     data.frame(xbrl_status = type)
   })
   
-  export <- merge(timelog_with_ye, service_status, by = c("Account.Name", "Date"))
+  export <- merge(timelog_with_ye, service_status, by = c("Account.Name", "yearmonth"))
   
   export$form_type <- "Q"
   export$calc <- as.numeric(export$Date - export$year_end)%%365
