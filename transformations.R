@@ -152,7 +152,7 @@ collapsed_time <- function(complete = T){
   source("import_functions.R")
   
   #import services and include customer status = none
-  services <- import_services()
+  services <- import_services(include_hourly = T)
   timelog <- import_timelog()
   
   #initial exclusions. pre-Q2 2012 time and in-progress or not started services
@@ -167,7 +167,7 @@ collapsed_time <- function(complete = T){
   collapsed_time[collapsed_time$role %in% "Sr PSM",]$role <- "Sr.PSM.Hours"
   collapsed_time <- dcast(collapsed_time, Services.ID ~ role, sum, value.var = "Hours")
   collapsed_time$Hours <- rowSums(collapsed_time[,!names(collapsed_time) %in% c("Services.ID")])
-  collapsed_history <- merge(services, collapsed_time, "Services.ID", all = T)
+  collapsed_history <- merge(services, collapsed_time, "Services.ID", all.x = T)
   
   collapsed_history <- collapsed_history[collapsed_history$filing.estimate >= as.Date("2012-06-30"),]
   collapsed_history
