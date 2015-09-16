@@ -520,6 +520,15 @@ import_salesforce_daily_hours <- function(name = "daily_hours.csv", wd = 'C:/R/w
     }
   }
   
+  #for people demoted to PSM, set time forward to psm
+  for (i in 1:length(role_dates[!is.na(role_dates$back_to_psm),]$Full.Name)){
+    psm <- role_dates[!is.na(role_dates$back_to_psm),]$Full.Name[i]
+    promotion_date <- role_dates[!is.na(role_dates$back_to_psm),]$back_to_psm[i]
+    if(length(daily[daily$User %in% psm & daily$Date >= promotion_date, ]$role) > 0){
+      daily[daily$User %in% psm & daily$Date >= promotion_date, ]$role <- "PSM"
+    }
+  }
+  
   #for psms who left PS, set time forward to NA
   for (i in 1:length(role_dates[!is.na(role_dates$End.Date),]$Full.Name)){
     psm <- role_dates[!is.na(role_dates$End.Date),]$Full.Name[i]
@@ -643,6 +652,15 @@ import_salesforce_timelog <- function(name = "timelog_for_R.csv", wd = 'C:/R/wor
     promotion_date <- role_dates[!is.na(role_dates$to_director),]$to_director[i]
     if(length(timelog[timelog$User %in% psm & timelog$Date >= promotion_date, ]$role) > 0){
       timelog[timelog$User %in% psm & timelog$Date >= promotion_date, ]$role <- "Director"
+    }
+  }
+  
+  #for people demoted to PSM, set time forward to psm
+  for (i in 1:length(role_dates[!is.na(role_dates$back_to_psm),]$Full.Name)){
+    psm <- role_dates[!is.na(role_dates$back_to_psm),]$Full.Name[i]
+    promotion_date <- role_dates[!is.na(role_dates$back_to_psm),]$back_to_psm[i]
+    if(length(daily[daily$User %in% psm & daily$Date >= promotion_date, ]$role) > 0){
+      daily[daily$User %in% psm & daily$Date >= promotion_date, ]$role <- "PSM"
     }
   }
   
@@ -808,6 +826,15 @@ import_openair_time <- function(name = "time_entry_detail_report__complete_repor
     promotion_date <- role_dates[!is.na(role_dates$to_director),]$to_director[i]
     if(length(openair[openair$User %in% psm & openair$Date >= promotion_date, ]$role) > 0){
       openair[openair$User %in% psm & openair$Date >= promotion_date, ]$role <- "Director"
+    }
+  }
+  
+  #for people demoted to PSM, set time forward to psm
+  for (i in 1:length(role_dates[!is.na(role_dates$back_to_psm),]$Full.Name)){
+    psm <- role_dates[!is.na(role_dates$back_to_psm),]$Full.Name[i]
+    promotion_date <- role_dates[!is.na(role_dates$back_to_psm),]$back_to_psm[i]
+    if(length(daily[daily$User %in% psm & daily$Date >= promotion_date, ]$role) > 0){
+      daily[daily$User %in% psm & daily$Date >= promotion_date, ]$role <- "PSM"
     }
   }
   
