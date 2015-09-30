@@ -659,8 +659,8 @@ import_salesforce_timelog <- function(name = "timelog_for_R.csv", wd = 'C:/R/wor
   for (i in 1:length(role_dates[!is.na(role_dates$back_to_psm),]$Full.Name)){
     psm <- role_dates[!is.na(role_dates$back_to_psm),]$Full.Name[i]
     promotion_date <- role_dates[!is.na(role_dates$back_to_psm),]$back_to_psm[i]
-    if(length(daily[daily$User %in% psm & daily$Date >= promotion_date, ]$role) > 0){
-      daily[daily$User %in% psm & daily$Date >= promotion_date, ]$role <- "PSM"
+    if(length(timelog[timelog$User %in% psm & timelog$Date >= promotion_date, ]$role) > 0){
+      timelog[timelog$User %in% psm & timelog$Date >= promotion_date, ]$role <- "PSM"
     }
   }
   
@@ -686,42 +686,21 @@ import_openair_time <- function(name = "time_entry_detail_report__complete_repor
   source("import_functions.r")
   
   setwd(wd)
-  openair <- read.csv(name, header = F, stringsAsFactors = F)
+  openair <- read.csv(name, header = T, skip = 1, stringsAsFactors = F)
   print(paste(name, "last updated", round(difftime(Sys.time(), file.info(name)$mtime, units = "days")
                     , digits = 1), "days ago", sep = " "))
-  openair <- openair[-1,]
-  
-  #populate psm and job to columns a and b
-  for (row in 1:dim(openair)[1]){
-    if (openair[row, 1] %in% " "){
-      
-    }else{
-      job = openair[row, 1]
-    }
-    if (openair[row, 2] %in% " "){
-      
-    }else{
-      psm = openair[row, 2]
-    }
-    if (!openair[row, 3] %in% " "){
-      openair[row, 1] <- job
-      openair[row, 2] <- psm
-    }
-  }
-  #grab row 1 for header and remove
-  names(openair) <- openair[1,]
-  openair <- openair[-1,]
+
   #trim leading psm and job rows
   names(openair) <- gsub("- ","",names(openair))
-  names(openair) <- gsub("[[:punct:]]","",names(openair))
-  names(openair) <- gsub(" ",".",names(openair))
+  names(openair) <- gsub("[[:punct:]]"," ",names(openair))
+  names(openair) <- gsub("[ ]{1,}",".",names(openair))
   openair$services_id_15 <- substr(openair$"Project.SFDC.Project.ID",1,15)
   
   #cast data values
   openair$"Project.Quarter.End.Date.QED" <- as.Date(openair$"Project.Quarter.End.Date.QED", format = "%m/%d/%Y")
   openair$"Project.Filing.Date" <- as.Date(openair$"Project.Filing.Date", format = "%m/%d/%Y")
   openair$"Project.Filing.Deadline.Date" <- as.Date(openair$"Project.Filing.Deadline.Date", format = "%m/%d/%Y")
-  openair$"Project..of.Facts" <- as.numeric(openair$"Project..of.Facts")
+  openair$"Project.of.Facts" <- as.numeric(openair$"Project.of.Facts")
   openair$Time.Hours <- as.numeric(openair$Time.Hours)
   openair$Date <- as.Date(openair$Date, format = "%m/%d/%Y")
   
@@ -833,8 +812,8 @@ import_openair_time <- function(name = "time_entry_detail_report__complete_repor
   for (i in 1:length(role_dates[!is.na(role_dates$back_to_psm),]$Full.Name)){
     psm <- role_dates[!is.na(role_dates$back_to_psm),]$Full.Name[i]
     promotion_date <- role_dates[!is.na(role_dates$back_to_psm),]$back_to_psm[i]
-    if(length(daily[daily$User %in% psm & daily$Date >= promotion_date, ]$role) > 0){
-      daily[daily$User %in% psm & daily$Date >= promotion_date, ]$role <- "PSM"
+    if(length(openair[openair$User %in% psm & openair$Date >= promotion_date, ]$role) > 0){
+      openair[openair$User %in% psm & openair$Date >= promotion_date, ]$role <- "PSM"
     }
   }
   
