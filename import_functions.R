@@ -690,7 +690,7 @@ import_openair_time <- function(name = "time_entry_detail_report__complete_repor
   print(paste(name, "last updated", round(difftime(Sys.time(), file.info(name)$mtime, units = "days")
                     , digits = 1), "days ago", sep = " "))
 
-  #trim leading psm and job rows
+  #trim names
   names(openair) <- gsub("- ","",names(openair))
   names(openair) <- gsub("[[:punct:]]"," ",names(openair))
   names(openair) <- gsub("[ ]{1,}",".",names(openair))
