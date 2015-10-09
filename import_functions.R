@@ -85,11 +85,11 @@ import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/w
     names(services)[names(services) %in% c("Account..Account.Name")] <- "Account.Name"
     names(services)[names(services) %in% c("Account..18.Digit.ID")] <- "Account.ID"
     names(services)[names(services) %in% c("PSM..Full.Name")] <- "PSM"
-    names(services)[names(services) %in% c("Sr.PSM..Full.Name")] <- "Sr.PSM"
+    names(services)[names(services) %in% c("Team.Mgr.PS..Full.Name")] <- "Sr.PSM"
     names(services)[names(services) %in% c("CSM..Full.Name")] <- "CSM"
     names(services)[names(services) %in% c("Sr.CSM..Full.Name")] <- "Sr.CSM"
     names(services)[names(services) %in% c("Sr.Team.Mgr.CS..Full.Name")] <- "CS.TM"
-    names(services)[names(services) %in% c("Sr.Team.Mgr.PS..Full.Name")] <- "PS.TM"
+    names(services)[names(services) %in% c("Sr.Mgr.PS..Full.Name")] <- "PS.TM"
     names(services)[names(services) %in% c("Churned.Effective.Date")] <- "Churn.Date"
     services$Form.Type[services$Form.Type == 'N/A' & !is.na(services$Form.Type)] <- NA
     #services$Goodwill.Hours.Available[services$Goodwill.Hours.Available %in% c("0")] <- NA  
