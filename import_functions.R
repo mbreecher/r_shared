@@ -505,6 +505,7 @@ import_openair_time <- function(name = "time_entry_detail_report__complete_repor
   library(reshape2)
   setwd("C:/R/workspace/shared")
   source("import_functions.r")
+  source("helpers.R")
   
   setwd(wd)
   openair <- read.csv(name, header = T, skip = 1, stringsAsFactors = F)
