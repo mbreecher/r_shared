@@ -306,19 +306,6 @@ import_hierarchy <- function(name = "hierarchy.csv"){
   hierarchy
 }
 
-import_app_filing_data <- function(name = "app_filing_data.csv", wd = "C:/R/workspace/source"){
-  print ("this function has been deprecated")
-  print ("please use 'load_app_filing_data'")
-  setwd(wd)
-  app_data <- read.csv(name, header = T, stringsAsFactors = F)
-  print(paste(name, "last updated", round(difftime(Sys.time(), file.info(name)$mtime, units = "days"), digits = 1), "days ago", sep = " "))
-  app_data$Filing.Date <- as.Date(app_data$Filing.Date, format = "%m/%d/%Y")
-  app_data$monthyear <- format(app_data$Filing.Date, format = "%y-%m")
-  app_data$Fact.Cnt <- as.numeric(app_data$Fact.Cnt)
-  app_data$EXT.Fact.Cnt <- as.numeric(app_data$EXT.Fact.Cnt)
-  app_data
-}
-
 load_app_filing_data <- function(){
   setwd("c:/r/workspace/source")
   test <- readRDS("app_filings.Rda")  
