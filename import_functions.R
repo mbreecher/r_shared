@@ -87,10 +87,11 @@ import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/w
     names(services)[names(services) %in% c("PSM..Full.Name")] <- "PSM"
     names(services)[names(services) %in% c("Team.Mgr.PS..Full.Name")] <- "Sr.PSM"
     names(services)[names(services) %in% c("CSM..Full.Name")] <- "CSM"
-    names(services)[names(services) %in% c("Sr.CSM..Full.Name")] <- "Sr.CSM"
-    names(services)[names(services) %in% c("Sr.Team.Mgr.CS..Full.Name")] <- "CS.TM"
+    names(services)[names(services) %in% c("Team.Mgr.CS..Full.Name")] <- "Sr.CSM"
+    names(services)[names(services) %in% c("Sr.Mgr.CS..Full.Name")] <- "CS.TM"
     names(services)[names(services) %in% c("Sr.Mgr.PS..Full.Name")] <- "PS.TM"
     names(services)[names(services) %in% c("Churned.Effective.Date")] <- "Churn.Date"
+    names(services)[names(services) %in% c("Account..Intacct.Customer.ID")] <- "Intacct.Customer.ID"
     services$Form.Type[services$Form.Type == 'N/A' & !is.na(services$Form.Type)] <- NA
     #services$Goodwill.Hours.Available[services$Goodwill.Hours.Available %in% c("0")] <- NA  
     services$Quarter.End <- as.Date(services$Quarter.End, format = "%m/%d/%Y")
@@ -114,7 +115,7 @@ import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/w
     }
     
     #build a lits of unique customers and customer data
-    base_info <- c("Account.Name", "Account.ID", "CIK", "CSM", "Sr.CSM", "PSM", "Sr.PSM", "Churn.Date", "Year.End", "XBRL.Status")
+    base_info <- c("Account.Name", "Account.ID", "CIK", "CSM", "Sr.CSM", "PSM", "Sr.PSM", "Churn.Date", "Year.End", "XBRL.Status", "Intacct.Customer.ID")
     #certain customer service lin items don't populate account info. We need to do that manually to prevent data duplication
     account_data <- services[,colnames(services) %in% base_info]
     account_data <- unique(account_data)

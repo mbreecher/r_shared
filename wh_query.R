@@ -4,7 +4,7 @@ wh_query <- function(sql = ""){
   load(file.path("C:/", "creds.Rdata"))
   
   con <- dbConnect(drv = dbDriver("MySQL"),
-                  host = "datawarehouse-prod.workiva.net",
+                  host = "datawarehouse-prod-rr.workiva.net",
                   dbname = "wf_warehouse",
                   user = dw_username,
                   password = dw_password
