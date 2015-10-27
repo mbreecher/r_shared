@@ -133,3 +133,26 @@ role <- function(user_vector = NULL, date_vector = NULL, title_vector = NULL, is
   
   result$role
 }
+
+sequence_yearweeks <- function(min, max, by){
+  if(min <= max){
+    loop = min
+    result <- c()
+    repeat{
+      result <- c(result, loop)
+      if(as.numeric(substr(loop, 4,5)) + by >= 52){
+        loop <- paste(as.numeric(substr(loop, 1,2))+1, sprintf("%02d", (as.numeric("00") + by)%% 52),  sep = "-")
+      }else{
+        loop <- paste(substr(loop, 1,2),sprintf("%02d", as.numeric(substr(loop, 4,5))+by), sep = "-")
+      }
+      if(loop > max){
+        return(result)
+        break
+      }
+    }
+  }else{
+    print('arguments aren\'t properly ordered')
+    return (result)
+    break
+  }
+}
