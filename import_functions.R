@@ -566,3 +566,30 @@ import_salesforce_filing_data <-function(name = "salesforce_filing_data.csv", wd
     workload$Filing.Date <- as.Date(workload$Filing.Date, format = "%m/%d/%Y")
     workload
 }
+
+import_sec <- function(){
+  library(RPostgreSQL)
+  start = Sys.time()
+  sec_data <- pg_query("
+                       select r.report_id, e.name ,e.standard_industry_code as sic, e.reference_number as cik, e.trading_symbol as ticker, 
+                          f.entity_id, r.report_id, f.filing_number, f.form_type, f.filing_date, por.report_date,
+                          f.creation_software, dp.facts
+                        from (select distinct filing_number, form_type, filing_date, creation_software, filing_id, entity_id from filing) as f
+                        inner join (select distinct name, entity_id, standard_industry_code, 
+                                    reference_number, trading_symbol from entity) as e
+                          using (entity_id)
+                        inner join (select distinct report_id, filing_id from report) as r
+                    	    using (filing_id)
+                        inner join (select report_id, count(*) as facts 
+                                		from data_point
+                                		where not source_line is null
+                                		group by report_id) as dp using (report_id)
+                        left join (select distinct report_id, xml_id, value as report_date 
+                        		from data_point
+                        		where xml_id like '%DocumentPeriodEndDate%') as por
+                    	using (report_id)
+                        where f.filing_date >= current_date - interval '365 days'
+                       ")
+  print ("Query Time:")
+  print (Sys.time() - start)
+}
