@@ -592,4 +592,5 @@ import_sec <- function(){
                        ")
   print ("Query Time:")
   print (Sys.time() - start)
+  sec_data
 }
