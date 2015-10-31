@@ -584,10 +584,7 @@ import_sec <- function(){
                                 		from data_point
                                 		where not source_line is null
                                 		group by report_id) as dp using (report_id)
-                        left join (select distinct report_id, xml_id, value as report_date 
-                        		from data_point
-                        		where xml_id like '%DocumentPeriodEndDate%') as por
-                    	using (report_id)
+                    	    using (report_id)
                         where f.filing_date >= current_date - interval '365 days'
                        ")
   print ("Query Time:")
