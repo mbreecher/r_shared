@@ -146,7 +146,7 @@ collapsed_time_with_billable <- function(include_incomplete = F){
   export
 }
 
-collapsed_time <- function(complete = T){
+collapsed_time_simple <- function(complete = T){
   
   # Pull in import functions
   setwd("C:/R/workspace/shared")
@@ -174,6 +174,68 @@ collapsed_time <- function(complete = T){
   collapsed_history <- collapsed_history[collapsed_history$filing.estimate >= as.Date("2012-06-30") &
                                            !is.na(collapsed_history$filing.estimate),]
   collapsed_history
+}
+
+collapsed_time_with_most_active <- function(complete = T){
+  library(reshape2)
+  library(plyr)
+  
+  # Pull in import functions
+  setwd("C:/R/workspace/shared")
+  source("import_functions.R")
+  
+  #import services and include customer status = none
+  services <- import_services()
+  timelog <- import_timelog()
+  
+  Q22014_to_date <- seq(as.Date("2014/06/30"), Sys.Date(), by = "day")
+  services <- services[services$Filing.Date %in% Q22014_to_date | (services$filing.estimate %in% Q22014_to_date & 
+                                                                     is.na(services$Filing.Date)),]
+  services <- services[services$filing.estimate <= Sys.Date() | services$Filing.Date <= Sys.Date(),]
+  services <- services[services$Status %in% "Completed",]
+  
+  #####################
+  #  Collapsed Time
+  #####################
+  agg_time <- aggregate(Hours ~ Services.ID, data = timelog, FUN = sum)
+  
+  agg_time_by_user <- aggregate(Hours ~ Services.ID + User + role, data = timelog, FUN = sum)
+  
+  most_active <- ddply(agg_time_by_user[!agg_time_by_user$Services.ID %in% "",], .var = "Services.ID", .fun = function(x){
+    highest <- x[x$Hours == max(x$Hours),]$User
+    data.frame(Services.ID = unique(x$Services.ID),
+               most_active = highest[1],
+               psm_time = sum(x[x$role %in% "PSM",]$Hours),
+               sr_psm_time = sum(x[x$role %in% "Sr PSM",]$Hours)
+    )
+  })
+  
+  agg_time <- merge(agg_time, most_active, by = "Services.ID", all.x = T)
+  
+  billable_time <- aggregate(Hours ~ Related.Service.Id, data = timelog, FUN = sum)
+  billable_time <- billable_time[!billable_time$Related.Service.Id %in% "",]
+  names(billable_time) <- c("Services.ID", "Billable.Hours")
+  
+  collapsed_time <- merge(services, agg_time, by = c("Services.ID"), all.x = T)
+  collapsed_time <- merge(collapsed_time, billable_time, by = c("Services.ID"), all.x = T)
+  
+  # computer priors and attach to k_time
+  averages <- ddply(collapsed_time[!is.na(collapsed_time$Hours),], 
+                    .var = c("Service.Type", "Form.Type", "reportingPeriod"), .fun = function(x){
+                      # compute statistics by service and form type
+                      data.frame( n = length(x$Hours),
+                                  mean = mean(x$Hours),
+                                  sd = sd(x$Hours))
+                    })
+  collapsed_time <- merge(collapsed_time, averages, by = c("Service.Type", "Form.Type", "reportingPeriod"))
+  collapsed_time$project_normalized_time <- NA
+  collapsed_time[!is.na(collapsed_time$sd),]$project_normalized_time <- 
+    (collapsed_time[!is.na(collapsed_time$sd),]$Hours - collapsed_time[!is.na(collapsed_time$sd),]$mean)/
+    collapsed_time[!is.na(collapsed_time$sd),]$sd
+  
+  collapsed_time[is.na(collapsed_time$Billable.Hours),]$Billable.Hours <- 0
+  collapsed_time[is.na(collapsed_time$Hours),]$Hours <- 0
+  collapsed_time
 }
 
 weekly_time <- function(){
