@@ -156,3 +156,26 @@ sequence_yearweeks <- function(min, max, by){
     break
   }
 }
+
+sequence_yearquarters <- function(min, max, by){
+  if(min <= max){
+    loop = min
+    result <- c()
+    repeat{
+      result <- c(result, loop)
+      if((as.numeric(substr(loop, 5,5)) + by) > 4){
+        loop <- paste(as.numeric(substr(loop, 1,4))+1, by %% 4,  sep = "")
+      }else{
+        loop <- paste(substr(loop, 1,4),as.numeric(substr(loop, 5,5))+by, sep = "")
+      }
+      if(loop > max){
+        return(result)
+        break
+      }
+    }
+  }else{
+    print('arguments aren\'t properly ordered')
+    return (result)
+    break
+  }
+}

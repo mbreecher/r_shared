@@ -569,25 +569,57 @@ import_salesforce_filing_data <-function(name = "salesforce_filing_data.csv", wd
 
 import_sec <- function(){
   library(RPostgreSQL)
+  setwd("C:/R/workspace/shared")
+  source("herm_query.R")
   start = Sys.time()
   sec_data <- pg_query("
-                       select r.report_id, e.name ,e.standard_industry_code as sic, e.reference_number as cik, e.trading_symbol as ticker, 
-                          f.entity_id, r.report_id, f.filing_number, f.form_type, f.filing_date, por.report_date,
-                          f.creation_software, dp.facts
-                        from (select distinct filing_number, form_type, filing_date, creation_software, filing_id, entity_id from filing) as f
-                        inner join (select distinct name, entity_id, standard_industry_code, 
-                                    reference_number, trading_symbol from entity) as e
-                          using (entity_id)
-                        inner join (select distinct report_id, filing_id from report) as r
-                    	    using (filing_id)
-                        inner join (select report_id, count(*) as facts 
-                                		from data_point
-                                		where not source_line is null
-                                		group by report_id) as dp using (report_id)
-                    	    using (report_id)
-                        where f.filing_date >= current_date - interval '365 days'
+                       SELECT r.report_id, e.name ,e.standard_industry_code as sic, e.reference_number as cik, e.trading_symbol as ticker, 
+                          f.entity_id, r.report_id, f.accession_number, f.form_type, f.filing_date, por.report_date,
+                          f.creation_software, e.filer_category, dp.facts
+                        FROM (SELECT DISTINCT filing_number as accession_number, form_type, filing_date, creation_software, filing_id, 
+                              entity_id FROM filing) AS f
+                        INNER JOIN (select distinct name, entity_id, standard_industry_code, filer_category,
+                                    reference_number, trading_symbol from entity) AS e
+                      USING (entity_id)
+                        INNER JOIN (select distinct report_id, filing_id from report) AS r
+                    	USING (filing_id)
+                        INNER JOIN (select report_id, count(*) AS facts 
+                    		from data_point
+                    		where not source_line is null
+                    		group by report_id) as dp USING (report_id)
+                        LEFT JOIN (select report_id, value as report_date from aspect as a
+                    		JOIN data_point as dp using (aspect_id)
+                    		where a.name like '%DocumentPeriodEndDate%') AS por
+                    	USING (report_id)
+                        WHERE f.filing_date >= current_date - interval '365 days'
                        ")
   print ("Query Time:")
   print (Sys.time() - start)
+  
+  sec_data$report_date <- as.Date(sec_data$report_date, format = "%Y-%m-%d")
+  
+  #calculate filing deadline estimate for all projects
+  #for facts with form type and registrant type, set reporting offset
+  sec_data$reporting_offset <- paste(sec_data$filer_category, sec_data$form_type, Sep = "") #placeholder lookup value
+  #set offsets for Qs
+  sec_data$reporting_offset[sec_data$reporting_offset %in% c("Smaller Reporting Company 10-Q ", "Smaller Reporting Company 10-Q/A ")] <- 45
+  sec_data$reporting_offset[sec_data$reporting_offset %in% c("Non-accelerated Filer 10-Q ", "Non-accelerated Filer 10-Q/A ")] <- 45
+  sec_data$reporting_offset[sec_data$reporting_offset %in% c("Smaller Reporting Accelerated Filer 10-Q ", "Smaller Reporting Accelerated Filer 10-Q/A ", "Accelerated Filer 10-Q ", "Accelerated Filer 10-Q/A ")] <- 40
+  sec_data$reporting_offset[sec_data$reporting_offset %in% c("Large Accelerated Filer 10-Q ", "Large Accelerated Filer 10-Q/A ")] <- 40
+  #set offsets for Ks
+  sec_data$reporting_offset[sec_data$reporting_offset %in% c("Smaller Reporting Company 10-K ", "Smaller Reporting Company 10-K/A ")] <- 90
+  sec_data$reporting_offset[sec_data$reporting_offset %in% c("Non-accelerated Filer 10-K ", "Non-accelerated Filer 10-K/A ")] <- 90
+  sec_data$reporting_offset[sec_data$reporting_offset %in% c("Smaller Reporting Accelerated Filer 10-K ", "Smaller Reporting Accelerated Filer 10-K/A ","Accelerated Filer 10-K ", "Accelerated Filer 10-K/A ")] <- 75
+  sec_data$reporting_offset[sec_data$reporting_offset %in% c("Large Accelerated Filer 10-K ", "Large Accelerated Filer 10-K/A ")] <- 60
+  #
+  sec_data$reporting_offset[!(sec_data$reporting_offset %in% c(40, 45, 60, 75, 90))] = NA
+  
+  #with reporting offset, calculate filing.deadline 
+  sec_data$filing.deadline <- NA
+  sec_data$filing.deadline <- as.Date(sec_data$filing.deadline)
+  sec_data[sec_data$reporting_offset %in% c(40, 45, 60, 75, 90), ]$filing.deadline <- 
+    as.Date(sec_data[sec_data$reporting_offset %in% c(40, 45, 60, 75, 90),]$report_date) + 
+    as.numeric(sec_data[sec_data$reporting_offset %in% c(40, 45, 60, 75, 90),]$reporting_offset)
+  
   sec_data
 }
