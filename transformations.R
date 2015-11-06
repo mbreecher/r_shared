@@ -40,7 +40,6 @@ collapsed_time_with_billable <- function(include_incomplete = F){
   # include_incomplete filters to include only "Completed" services
   library(reshape2)
   library(plyr)
-  library(RecordLinkage)
   
   # Pull in import functions
   setwd("C:/R/workspace/shared")
