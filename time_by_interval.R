@@ -1,7 +1,6 @@
 timelog_with_status <- function(...){
   library(reshape2)
   library(plyr)
-  library(RecordLinkage)
   
   # Pull in import functions
   setwd("C:/R/workspace/shared")
