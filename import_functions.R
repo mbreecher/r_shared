@@ -33,8 +33,8 @@ import_timelog <- function(sf_name = "timelog_for_R.csv", oa_name = "time_entry_
   }
   
   #exclude openair projects that relate to non-billable time (e.g. TEC or admin)
+  oa_timelog <- oa_timelog[oa_timelog$Service %in% oa_timelog[grep("Fixed", oa_timelog$Service) ,]$Service | !oa_timelog$Service.Type %in% "",]    
   
-  oa_timelog <- oa_timelog[oa_timelog$Service %in% oa_timelog[grep("Fixed", oa_timelog$Service) ,]$Service | !oa_timelog$Service.Type %in% "",]  
   
   # logic to include Project.owner in salesforce timelog
   sf_timelog$Project.owner <- ""
@@ -476,8 +476,10 @@ import_openair_time <- function(name = "time_entry_detail_report__complete_repor
   
   
   #Construct the Period Identifiers for service grouping
-  openair$filingPeriod <- paste(as.numeric(format(openair$Project.Filing.Date, "%Y")), ceiling(as.numeric(format(openair$Project.Filing.Date, "%m"))/3), sep = "")
-  openair$reportingPeriod <- paste(as.numeric(format(openair$Project.Quarter.End.Date.QED, "%Y")), ceiling(as.numeric(format(openair$Project.Quarter.End.Date.QED, "%m"))/3), sep = "")
+  openair$filingPeriod <- paste(as.numeric(format(openair$Date, "%Y")), ceiling(as.numeric(format(openair$Date, "%m"))/3), sep = "")
+  openair$reportingPeriod <- ifelse(substr(openair$filingPeriod, nchar(openair$filingPeriod), nchar(openair$filingPeriod)) == 1,
+                                    paste(as.numeric(format(openair$Date, "%Y")) -1, 4, sep = ""),
+                                    paste(as.numeric(format(openair$Date, "%Y")), ceiling(as.numeric(format(openair$Date, "%m"))/3) - 1, sep = ""))
   
   #reverse User names from "last, first" to "first last"
   resources <- read.csv(textConnection(openair$User), header = F, strip.white=T)
