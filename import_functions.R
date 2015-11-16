@@ -475,7 +475,7 @@ import_openair_time <- function(name = "time_entry_detail_report__complete_repor
   }
   
   
-  #Construct the Period Identifiers for service grouping
+  #Construct the Period Identifiers for service grouping  
   openair$filingPeriod <- paste(as.numeric(format(openair$Date, "%Y")), ceiling(as.numeric(format(openair$Date, "%m"))/3), sep = "")
   openair$reportingPeriod <- ifelse(substr(openair$filingPeriod, nchar(openair$filingPeriod), nchar(openair$filingPeriod)) == 1,
                                     paste(as.numeric(format(openair$Date, "%Y")) -1, 4, sep = ""),
