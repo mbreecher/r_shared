@@ -168,7 +168,7 @@ collapsed_time_simple <- function(complete = T){
   collapsed_time <- aggregate(Hours ~ Services.ID + role, FUN = sum, data = timelog)
   collapsed_time <- collapsed_time[!collapsed_time$Services.ID %in% "",]
   collapsed_time[collapsed_time$role %in% "PSM",]$role <- "PSM.Hours"
-  collapsed_time[collapsed_time$role %in% "Sr PSM",]$role <- "Sr.PSM.Hours"
+  collapsed_time[collapsed_time$role %in% "TM",]$role <- "TM.Hours"
   collapsed_time <- dcast(collapsed_time, Services.ID ~ role, sum, value.var = "Hours")
   collapsed_time$Hours <- rowSums(collapsed_time[,!names(collapsed_time) %in% c("Services.ID")])
   collapsed_history <- merge(services, collapsed_time, "Services.ID", all.x = T)
@@ -208,7 +208,7 @@ collapsed_time_with_most_active <- function(complete = T){
     data.frame(Services.ID = unique(x$Services.ID),
                most_active = highest[1],
                psm_time = sum(x[x$role %in% "PSM",]$Hours),
-               sr_psm_time = sum(x[x$role %in% "Sr PSM",]$Hours)
+               tm_time = sum(x[x$role %in% "TM",]$Hours)
     )
   })
   

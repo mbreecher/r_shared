@@ -85,11 +85,11 @@ import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/w
     names(services)[names(services) %in% c("Account..Account.Name")] <- "Account.Name"
     names(services)[names(services) %in% c("Account..18.Digit.ID")] <- "Account.ID"
     names(services)[names(services) %in% c("PSM..Full.Name")] <- "PSM"
-    names(services)[names(services) %in% c("Team.Mgr.PS..Full.Name")] <- "Sr.PSM"
+    names(services)[names(services) %in% c("Team.Mgr.PS..Full.Name")] <- "PS.TM"
     names(services)[names(services) %in% c("CSM..Full.Name")] <- "CSM"
-    names(services)[names(services) %in% c("Team.Mgr.CS..Full.Name")] <- "Sr.CSM"
-    names(services)[names(services) %in% c("Sr.Mgr.CS..Full.Name")] <- "CS.TM"
-    names(services)[names(services) %in% c("Sr.Mgr.PS..Full.Name")] <- "PS.TM"
+    names(services)[names(services) %in% c("Team.Mgr.CS..Full.Name")] <- "CS.TM"
+    names(services)[names(services) %in% c("Sr.Mgr.CS..Full.Name")] <- "CS.Sr.TM"
+    names(services)[names(services) %in% c("Sr.Mgr.PS..Full.Name")] <- "PS.Sr.TM"
     names(services)[names(services) %in% c("Churned.Effective.Date")] <- "Churn.Date"
     names(services)[names(services) %in% c("Account..Intacct.Customer.ID")] <- "Intacct.Customer.ID"
     services$Form.Type[services$Form.Type == 'N/A' & !is.na(services$Form.Type)] <- NA
@@ -115,7 +115,7 @@ import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/w
     }
     
     #build a lits of unique customers and customer data
-    base_info <- c("Account.Name", "Account.ID", "CIK", "CSM", "Sr.CSM", "PSM", "Sr.PSM", "Churn.Date", "Year.End", "XBRL.Status", "Intacct.Customer.ID")
+    base_info <- c("Account.Name", "Account.ID", "CIK", "CSM", "CS.TM", "PSM", "PS.TM", "Churn.Date", "Year.End", "XBRL.Status", "Intacct.Customer.ID")
     #certain customer service lin items don't populate account info. We need to do that manually to prevent data duplication
     account_data <- services[,colnames(services) %in% base_info]
     account_data <- unique(account_data)
@@ -203,8 +203,8 @@ import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/w
     if(length(services[grep("Winkle", services$PSM),]$PSM) > 1){
       services[grep("Winkle", services$PSM),]$PSM <- "Winkle Manzano-Tipay"  
     }
-    if(length(services[grep("Farah", services$Sr.PSM),]$Sr.PSM) > 1){
-      services[grep("Farah", services$Sr.PSM),]$Sr.PSM <- "Farah Ali"  
+    if(length(services[grep("Farah", services$PS.TM),]$PS.TM) > 1){
+      services[grep("Farah", services$PS.TM),]$PS.TM <- "Farah Ali"  
     }
     if(length(services[grep("Gresham", services$PSM),]$PSM) > 1){
       services[grep("Gresham", services$PSM),]$PSM <- "Kim Gresham"  
@@ -330,7 +330,7 @@ import_daily_hours <- function(){
     print("no change to salesforce daily hours, loading timelog data...")
   }
   
-  # add Sr.PSM to sf_daily
+  # add PS.TM to sf_daily
   sf_daily$Project.owner <- ""
   
   #import openair time
