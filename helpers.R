@@ -9,11 +9,7 @@ is_psm <- function(user_vector = NULL, date_vector = NULL, title_vector = NULL){
     break
   }
   setwd('C:/R/workspace/source')
-  start_dates <- read.csv("ps_start_dates.csv", header = T , stringsAsFactors=F)
-  print(paste("ps_start_dates.csv", "last updated", round(difftime(Sys.time(), file.info("ps_start_dates.csv")$mtime, units = "days"), digits = 1), "days ago", sep = " "))
-  
-  start_dates$Start.Date <- as.Date(start_dates$Start.Date, format = "%m/%d/%Y")
-  start_dates$End.Date <- as.Date(start_dates$End.Date, format = "%m/%d/%Y")
+  start_dates <- readRDS("ps_start_dates.Rda")
   
   result <- data.frame(User = user_vector, Date = date_vector, User.Title = title_vector, is_psm = 0)
 
@@ -38,8 +34,10 @@ is_psm <- function(user_vector = NULL, date_vector = NULL, title_vector = NULL){
   }
   
   #case 2: unknown PSMs
-  ps_titles <- c("Professional Services Managers", "PSM", "Sr. PSM", "PSM Team Manager")
-  if(length(result[result$User.Title %in% ps_titles, ]$is_psm) > 0){
+  ps_titles <- c("Professional Services Managers", "PSM", "Senior Team Manager, Professional Services", "PSM Team Manager")
+  if(length(result[result$User.Title %in% ps_titles & result$is_psm %in% "0", ]$is_psm) > 0){
+    print("no start date information found for:")
+    print(unique(result[result$User.Title %in% ps_titles & result$is_psm %in% "0", ]$User))
     result[result$User.Title %in% ps_titles, ]$is_psm <- 1
   }
   
@@ -86,21 +84,21 @@ role <- function(user_vector = NULL, date_vector = NULL, title_vector = NULL, is
     }
   }
   
-  #for psms promoted to senior, set time forward to Sr PSM
+  #for psms promoted to senior, set time forward to TM
   for (i in 1:length(role_dates[!is.na(role_dates$to_senior),]$Full.Name)){
     psm <- role_dates[!is.na(role_dates$to_senior),]$Full.Name[i]
     promotion_date <- role_dates[!is.na(role_dates$to_senior),]$to_senior[i]
     if(length(result[result$User %in% psm & result$Date >= promotion_date, ]$role) > 0){
-      result[result$User %in% psm & result$Date >= promotion_date, ]$role <- "Sr PSM"
+      result[result$User %in% psm & result$Date >= promotion_date, ]$role <- "TM"
     }
   }
   
-  #for srs promoted to tms, set time forward to TM
+  #for srs promoted to tms, set time forward to Sr. TM
   for (i in 1:length(role_dates[!is.na(role_dates$to_tm),]$Full.Name)){
     psm <- role_dates[!is.na(role_dates$to_tm),]$Full.Name[i]
     promotion_date <- role_dates[!is.na(role_dates$to_tm),]$to_tm[i]
     if(length(result[result$User %in% psm & result$Date >= promotion_date, ]$role) > 0 ){
-      result[result$User %in% psm & result$Date >= promotion_date, ]$role <- "TM"
+      result[result$User %in% psm & result$Date >= promotion_date, ]$role <- "Sr.TM"
     }
   }
   
