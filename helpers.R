@@ -44,6 +44,20 @@ is_psm <- function(user_vector = NULL, date_vector = NULL, title_vector = NULL){
   result$is_psm
 }
 
+unify_alias <- function(user_vector = NULL){
+  if(is.null(user_vector)){
+    print ("user vector required")
+    break
+  }
+  setwd("C:/R/workspace/source")
+  alias <- readRDS("alias.Rda")
+  alias <- alias[order(alias$Date),]
+  for(row in 1:dim(alias)[1]){
+    user_vector[user_vector %in% alias[row, 1]] <- alias[row, 2]
+  }
+  user_vector
+}
+
 role <- function(user_vector = NULL, date_vector = NULL, title_vector = NULL, is_psm_vector = NULL){
   if(is.null(user_vector) | is.null(date_vector) | is.null(title_vector) | is.null(is_psm_vector)){
     print ("name, date, and title vectors required for role determination")
