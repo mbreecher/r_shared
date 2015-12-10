@@ -6,6 +6,7 @@ import_timelog <- function(sf_name = "timelog_for_R.csv", oa_name = "time_entry_
   library(reshape2)
   setwd("C:/R/workspace/shared")
   source("import_functions.r")
+  source("helpers.R")
   
   # Import salesforce time if necessary, otherwise, read from stored rda file
   setwd('C:/R/workspace/source')
@@ -45,24 +46,13 @@ import_timelog <- function(sf_name = "timelog_for_R.csv", oa_name = "time_entry_
   timelog <- timelog[,names(timelog) %in% c(names(oa_timelog), "Related.Service.Id") & names(timelog) %in% names(sf_timelog)]
   
   #make name corrections to match salesforce
-  setwd('C:/R/workspace/source')
-  name_changes <- read.csv("sf_oa_name_changes.csv", header = T, stringsAsFactors = F)
-  for (i in 1:dim(name_changes)[1]){
-    loop <- timelog[timelog$User %in% name_changes[i,2],]
-    if(dim(loop)[1] > 0){
-      timelog[timelog$User %in% name_changes[i,2],]$User <- name_changes[i,1]  
-    }
-  }
+  timelog$User <- unify_alias(timelog$User)
   
   #add cik from services data
   services <- import_services()
   pairs <- unique(services[,names(services) %in% c("CIK", "Account.Name")])
   timelog <- merge(timelog, pairs, by = "Account.Name", all.x = T)
-  
-  #unify folks who had a name change
-  timelog[grep("Winkle", timelog$User),]$User <- "Winkle Manzano-Tipay"
-  timelog[grep("Farah", timelog$User),]$User <- "Farah Ali"
-  timelog[grep("Gresham", timelog$User),]$User <- "Kim Gresham"
+
   timelog
 }
 
@@ -77,6 +67,7 @@ import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/w
     
     setwd("C:/R/workspace/shared")
     source("import_functions.r")
+    source("helpers.R")
     
     #trim footer information
     services <- services[1:(dim(services)[1] - 5),]
@@ -200,16 +191,8 @@ import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/w
     services$CIK <- as.numeric(services$CIK)
     services$Churn.Date <- as.Date(services$Churn.Date, format = "%m/%d/%Y")
     
-    if(length(services[grep("Winkle", services$PSM),]$PSM) > 1){
-      services[grep("Winkle", services$PSM),]$PSM <- "Winkle Manzano-Tipay"  
-    }
-    if(length(services[grep("Farah", services$PS.TM),]$PS.TM) > 1){
-      services[grep("Farah", services$PS.TM),]$PS.TM <- "Farah Ali"  
-    }
-    if(length(services[grep("Gresham", services$PSM),]$PSM) > 1){
-      services[grep("Gresham", services$PSM),]$PSM <- "Kim Gresham"  
-    }
-    
+    # name changes
+    services$PSM <- unify_alias(services$PSM)
     
 	if(output %in% c("psh")){
 	  svc_by_qtr <- aggregate(services$Service.Name, by=list(services$Account.Name, services$reportingPeriod), paste, collapse = "\n")
@@ -421,6 +404,7 @@ import_salesforce_timelog <- function(name = "timelog_for_R.csv", wd = 'C:/R/wor
   setwd("C:/r/workspace/shared")
   source("helpers.R")
   #need to remove non-psm time. 
+  timelog$User <- unify_alias(timelog$User)
   timelog$is_psm <- is_psm(timelog$User, timelog$Date, timelog$User.Title)
   
   #now all relevant time is marked, remove 0 and na time from timelog
@@ -491,6 +475,7 @@ import_openair_time <- function(name = "time_entry_detail_report__complete_repor
   openair$Project.owner[!openair$Project.owner %in% ""] <- paste(resources[,2], resources[,1], sep = " ")
   
   #****************************** construct is_psm
+  openair$User <- unify_alias(openair$User)
   openair$is_psm <- is_psm(openair$User, openair$Date, openair$User.Job.code)
   
   #****************************** import role dates
