@@ -332,18 +332,7 @@ import_daily_hours <- function(){
   timelog <- rbind(oa_timelog_agg, sf_daily)
   
   #make name corrections to match salesforce
-  setwd('C:/R/workspace/source')
-  name_changes <- read.csv("sf_oa_name_changes.csv", header = T, stringsAsFactors = F)
-  for (i in 1:dim(name_changes)[1]){
-    loop <- timelog[timelog$User %in% name_changes[i,2],]
-    if(dim(loop)[1] > 0){
-      timelog[timelog$User %in% name_changes[i,2],]$User <- name_changes[i,1]  
-    }
-  }
-  #unify folks who had a name change
-  timelog[grep("Winkle", timelog$User),]$User <- "Winkle Manzano-Tipay"
-  timelog[grep("Farah", timelog$User),]$User <- "Farah Ali"
-  timelog[grep("Gresham", timelog$User),]$User <- "Kim Gresham"
+  timelog$User <- unify_alias(timelog$User)
   timelog
 }
 
@@ -404,7 +393,7 @@ import_salesforce_timelog <- function(name = "timelog_for_R.csv", wd = 'C:/R/wor
   setwd("C:/r/workspace/shared")
   source("helpers.R")
   #need to remove non-psm time. 
-  timelog$User <- unify_alias(timelog$User)
+  timelog$User <- as.character(unify_alias(timelog$User))
   timelog$is_psm <- is_psm(timelog$User, timelog$Date, timelog$User.Title)
   
   #now all relevant time is marked, remove 0 and na time from timelog
@@ -475,7 +464,7 @@ import_openair_time <- function(name = "time_entry_detail_report__complete_repor
   openair$Project.owner[!openair$Project.owner %in% ""] <- paste(resources[,2], resources[,1], sep = " ")
   
   #****************************** construct is_psm
-  openair$User <- unify_alias(openair$User)
+  openair$User <- as.character(unify_alias(openair$User))
   openair$is_psm <- is_psm(openair$User, openair$Date, openair$User.Job.code)
   
   #****************************** import role dates
