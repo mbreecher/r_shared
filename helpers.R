@@ -13,7 +13,7 @@ is_psm <- function(user_vector = NULL, date_vector = NULL, title_vector = NULL){
   
   result <- data.frame(User = user_vector, Date = date_vector, User.Title = title_vector, is_psm = 0)
 
-  result[result$User %in% start_dates[is.na(start_dates$Start.Date) & is.na(start_dates$End.Date), ]$Full.Name, ]$is_psm <- 1 #psms who are still in PS
+  ## result[result$User %in% start_dates[is.na(start_dates$Start.Date) & is.na(start_dates$End.Date), ]$Full.Name, ]$is_psm <- 1 #psms who are still in PS
   for (psm in start_dates[!is.na(start_dates$Start.Date) | !is.na(start_dates$End.Date), ]$Full.Name) {#need to subset for each psm
     if (!is.na(start_dates[start_dates$Full.Name %in% psm, ]$Start.Date)){
       if(length(result[result$User %in% psm & !is.na(result$User) & result$Date >= start_dates[start_dates$Full.Name %in% psm, ]$Start.Date, ]$is_psm) > 0){
