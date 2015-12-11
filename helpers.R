@@ -37,7 +37,7 @@ is_psm <- function(user_vector = NULL, date_vector = NULL, title_vector = NULL){
   ps_titles <- c("Professional Services Managers", "PSM", "Senior Team Manager, Professional Services", "PSM Team Manager")
   if(length(result[result$User.Title %in% ps_titles & result$is_psm %in% "0", ]$is_psm) > 0){
     print("no start date information found for:")
-    print(unique(result[result$User.Title %in% ps_titles & result$is_psm %in% "0", ]$User))
+    print(as.character(unique(result[result$User.Title %in% ps_titles & result$is_psm %in% "0", ]$User)))
     result[result$User.Title %in% ps_titles, ]$is_psm <- 1
   }
   
