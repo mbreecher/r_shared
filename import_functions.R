@@ -1,7 +1,7 @@
 #I wanted to separate import and cleanup functions to minimize the noise in the aggregation
 
 
-import_timelog <- function(sf_name = "timelog_for_R.csv", oa_name = "time_entry_detail_report__complete_report.csv",include_cs=F, ...){
+import_timelog <- function(sf_name = "timelog_for_R.csv", oa_name = "time_entry_detail_report__complete_report.csv",include_cs=F, no_role = F, ...){
   library(plyr)
   library(reshape2)
   setwd("C:/R/workspace/shared")
@@ -365,7 +365,7 @@ daily
   
 }
 
-import_salesforce_timelog <- function(name = "timelog_for_R.csv", wd = 'C:/R/workspace/source', include_cs = T){
+import_salesforce_timelog <- function(name = "timelog_for_R.csv", wd = 'C:/R/workspace/source', include_cs = T, skip_role = F){
   #import and cleanup timelog
   setwd(wd)
   timelog <- read.csv(name, header = T , stringsAsFactors=F)
@@ -394,7 +394,9 @@ import_salesforce_timelog <- function(name = "timelog_for_R.csv", wd = 'C:/R/wor
   source("helpers.R")
   #need to remove non-psm time. 
   timelog$User <- as.character(unify_alias(timelog$User))
-  timelog$is_psm <- is_psm(timelog$User, timelog$Date, timelog$User.Title)
+  if(skip_role == F){ #skip condition to avoid feedback loop in is_psm function
+    timelog$is_psm <- is_psm(timelog$User, timelog$Date, timelog$User.Title)
+  }
   
   #now all relevant time is marked, remove 0 and na time from timelog
   if(include_cs == F){
@@ -408,14 +410,16 @@ import_salesforce_timelog <- function(name = "timelog_for_R.csv", wd = 'C:/R/wor
                                     paste(as.numeric(format(timelog$Date, "%Y")), ceiling(as.numeric(format(timelog$Date, "%m"))/3) - 1, sep = ""))
   
   #****************************** import role dates
-  timelog$role <- role(timelog$User, timelog$Date, timelog$User.Title, timelog$is_psm)
+  if(skip_role == F){ #skip condition to avoid feedback loop in role function
+    timelog$role <- role(timelog$User, timelog$Date, timelog$User.Title, timelog$is_psm)  
+  }
   
   timelog
   
   
 }
 
-import_openair_time <- function(name = "time_entry_detail_report__complete_report.csv", wd = "C:/R/workspace/source", include_cs = F){
+import_openair_time <- function(name = "time_entry_detail_report__complete_report.csv", wd = "C:/R/workspace/source", include_cs = F, skip_role = F){
   
   library(plyr)
   library(reshape2)
@@ -465,11 +469,13 @@ import_openair_time <- function(name = "time_entry_detail_report__complete_repor
   
   #****************************** construct is_psm
   openair$User <- as.character(unify_alias(openair$User))
-  openair$is_psm <- is_psm(openair$User, openair$Date, openair$User.Job.code)
-  
-  #****************************** import role dates
-  
-  openair$role <- role(openair$User, openair$Date, openair$User.Job.code, openair$is_psm)
+  if(skip_role == F){ #skip condition to avoid feedback loop in role function
+    openair$is_psm <- is_psm(openair$User, openair$Date, openair$User.Job.code)
+    
+    #****************************** import role dates
+    
+    openair$role <- role(openair$User, openair$Date, openair$User.Job.code, openair$is_psm)
+  }
   
   openair$Billable <- 0
   openair[openair$Project %in% unique(openair$Project)[grep("Hour", unique(openair$Project))],]$Billable <- 1

@@ -46,6 +46,7 @@ is_psm <- function(user_vector = NULL, date_vector = NULL, title_vector = NULL){
     print("new psms detected. Importing Timelog and updating ps start dates...")
     setwd("C:/R/workspace/shared")
     source("import_functions.r")
+    timelog <- import_timelog(skip_role = T)
     
     for(name in unique(result[result$User.Title %in% ps_titles & !result$User %in% start_dates$Full.Name, ]$User)){
       print(paste("name added to start dates: ", name), sep = "")
