@@ -107,7 +107,12 @@ role <- function(user_vector = NULL, date_vector = NULL, title_vector = NULL, is
   if(length(result[result$User.Title %in% unique(result$User.Title)[grep("PSM", unique(result$User.Title))],]$role) > 0){
     result[result$User.Title %in% unique(result$User.Title)[grep("PSM", unique(result$User.Title))],]$role <- "PSM"  
   }
-  result[result$is_psm %in% 1,]$role <- "PSM"
+  if(length(result[result$is_psm %in% "1",]$role) >0){
+    result[result$is_psm %in% "1",]$role <- "PSM"  
+  }
+  if(length(result[result$is_psm %in% "0",]$role) >0){
+    result[result$is_psm %in% "0",]$role <- NA
+  }
   
   #for each promotion event, set role forward to new role
   for (i in 1:length(promotions$Full.Name)){
