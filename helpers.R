@@ -14,34 +14,33 @@ is_psm <- function(user_vector = NULL, date_vector = NULL, title_vector = NULL){
   # add 
   
   result <- data.frame(User = user_vector, Date = date_vector, User.Title = title_vector, is_psm = 0)
+  
+  #case 1: unknown PSMs
+  if(dim(result[grepl("Professional", result$User.Title, ignore.case = T), ])[1] >0){
+    result[grepl("Professional", result$User.Title, ignore.case = T), ]$is_psm <- 1    
+  }
+  if(dim(result[grepl("PSM", result$User.Title, ignore.case = T), ])[1] > 0){
+    result[grepl("PSM", result$User.Title, ignore.case = T), ]$is_psm <- 1  
+  }
 
+  #case 2: known PSMs
   ## result[result$User %in% start_dates[is.na(start_dates$Start.Date) & is.na(start_dates$End.Date), ]$Full.Name, ]$is_psm <- 1 #psms who are still in PS
-  for (psm in start_dates[!is.na(start_dates$Start.Date) | !is.na(start_dates$End.Date), ]$Full.Name) {#need to subset for each psm
+  for (psm in start_dates$Full.Name) {#need to subset for each psm
     if (!is.na(start_dates[start_dates$Full.Name %in% psm, ]$Start.Date)){
-      if(length(result[result$User %in% psm & !is.na(result$User) & result$Date >= start_dates[start_dates$Full.Name %in% psm, ]$Start.Date, ]$is_psm) > 0){
-        result[result$User %in% psm & !is.na(result$User) & result$Date >= start_dates[start_dates$Full.Name %in% psm, ]$Start.Date, ]$is_psm <- 1
-      }
-      if(length(result[result$User %in% psm & !is.na(result$User) & result$Date < start_dates[start_dates$Full.Name %in% psm, ]$Start.Date, ]$is_psm) > 0){
-        result[result$User %in% psm & !is.na(result$User) & result$Date < start_dates[start_dates$Full.Name %in% psm, ]$Start.Date, ]$is_psm <- 0
+      if(length(result[result$User %in% psm & !is.na(result$Date) & result$Date >= start_dates[start_dates$Full.Name %in% psm, ]$Start.Date, ]$is_psm) > 0){
+        result[result$User %in% psm & !is.na(result$Date) & result$Date >= start_dates[start_dates$Full.Name %in% psm, ]$Start.Date, ]$is_psm <- 1
       }
     }
     if (!is.na(start_dates[start_dates$Full.Name %in% psm, ]$End.Date)){
-      if(length(result[result$User %in% psm & !is.na(result$User) & result$Date <= start_dates[start_dates$Full.Name %in% psm, ]$End.Date, ]$is_psm) > 0){
-        result[result$User %in% psm & !is.na(result$User) & result$Date <= start_dates[start_dates$Full.Name %in% psm, ]$End.Date, ]$is_psm <- 1 
-      }
-      if(length(result[result$User %in% psm & !is.na(result$User) & result$Date > start_dates[start_dates$Full.Name %in% psm, ]$End.Date, ]$is_psm) > 0){
-        result[result$User %in% psm & !is.na(result$User) & result$Date > start_dates[start_dates$Full.Name %in% psm, ]$End.Date, ]$is_psm <- 0
+      if(length(result[result$User %in% psm & !is.na(result$Date) & result$Date > start_dates[start_dates$Full.Name %in% psm, ]$End.Date, ]$is_psm) > 0){
+        result[result$User %in% psm & !is.na(result$Date) & result$Date > start_dates[start_dates$Full.Name %in% psm, ]$End.Date, ]$is_psm <- 0
       }
     }
   }
   
-  #case 2: unknown PSMs
-  ps_titles <- c("Professional Services Managers", "PSM", "Senior Team Manager, Professional Services", "PSM Team Manager")
-  if(length(result[result$User.Title %in% ps_titles & result$is_psm %in% "0", ]$is_psm) > 0){
-    result[result$User.Title %in% ps_titles, ]$is_psm <- 1
-  }
-  
   #add unknown PSMs to start dates dataframe
+  ps_titles <- unique(result[unique(c(grep("Professional", result$User.Title, ignore.case = T), 
+                                      grep("PSM", result$User.Title, ignore.case = T))), ]$User.Title)
   if(length(unique(result[result$User.Title %in% ps_titles & !result$User %in% start_dates$Full.Name, ]$User)) > 0){
     print("new psms detected. Importing Timelog and updating ps start dates...")
     setwd("C:/R/workspace/shared")
