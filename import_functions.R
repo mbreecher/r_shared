@@ -95,16 +95,6 @@ import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/w
     services[services$service_duration < 0 & !is.na(services$service_duration),]$service_duration <- NA
     services$Year.End <- format(services$Year.End, format = "%Y-%U")
     
-    #update estimated hours manually 
-    setwd("C:/R/workspace/source")
-    estimates <- read.csv("estimated_hours.csv", header = T, stringsAsFactors = F)
-    print(paste("estimated_hours.csv", "last updated", round(difftime(Sys.time(), file.info("estimated_hours.csv")$mtime, units = "days"), digits = 1), "days ago", sep = " "))
-    for(i in 1:dim(estimates)[1]){
-      if(length(services[services$Service.Type %in% estimates$Service.Type[i] & services$Form.Type %in% estimates$Form.Type[i],]$Hours.Estimate) > 0){
-        services[services$Service.Type %in% estimates$Service.Type[i] & services$Form.Type %in% estimates$Form.Type[i],]$Hours.Estimate <- estimates$Estimated[i]  
-      }
-    }
-    
     #build a lits of unique customers and customer data
     base_info <- c("Account.Name", "Account.ID", "CIK", "CSM", "CS.TM", "PSM", "PS.TM", "Churn.Date", "Year.End", "XBRL.Status", "Intacct.Customer.ID")
     #certain customer service lin items don't populate account info. We need to do that manually to prevent data duplication
@@ -404,7 +394,10 @@ import_salesforce_timelog <- function(name = "timelog_for_R.csv", wd = 'C:/R/wor
   }
   
   #Construct the Period Identifiers for service grouping
-  timelog$filingPeriod <- paste(as.numeric(format(timelog$Date, "%Y")), ceiling(as.numeric(format(timelog$Date, "%m"))/3), sep = "")
+  timelog$filingPeriod <- paste(as.numeric(format(timelog$Filing.Deadline, "%Y")), ceiling(as.numeric(format(timelog$Filing.Deadline, "%m"))/3), sep = "")
+  timelog[timelog$filingPeriod %in% "NANA",]$filingPeriod <- 
+    paste(as.numeric(format(timelog[timelog$filingPeriod %in% "NANA",]$Date, "%Y")), 
+          ceiling(as.numeric(format(timelog[timelog$filingPeriod %in% "NANA",]$Date, "%m"))/3), sep = "")
   timelog$reportingPeriod <- ifelse(substr(timelog$filingPeriod, nchar(timelog$filingPeriod), nchar(timelog$filingPeriod)) == 1,
                                     paste(as.numeric(format(timelog$Date, "%Y")) -1, 4, sep = ""),
                                     paste(as.numeric(format(timelog$Date, "%Y")), ceiling(as.numeric(format(timelog$Date, "%m"))/3) - 1, sep = ""))
