@@ -402,8 +402,8 @@ import_salesforce_timelog <- function(name = "timelog_for_R.csv", wd = 'C:/R/wor
     paste(as.numeric(format(timelog[timelog$filingPeriod %in% "NANA",]$Date, "%Y")), 
           ceiling(as.numeric(format(timelog[timelog$filingPeriod %in% "NANA",]$Date, "%m"))/3), sep = "")
   timelog$reportingPeriod <- ifelse(substr(timelog$filingPeriod, nchar(timelog$filingPeriod), nchar(timelog$filingPeriod)) == 1,
-                                    paste(as.numeric(format(timelog$Date, "%Y")) -1, 4, sep = ""),
-                                    paste(as.numeric(format(timelog$Date, "%Y")), ceiling(as.numeric(format(timelog$Date, "%m"))/3) - 1, sep = ""))
+                                    paste(as.numeric(substr(timelog$filingPeriod, 1, nchar(timelog$filingPeriod) -1)) -1, 4, sep = ""),
+                                    paste(as.numeric(substr(timelog$filingPeriod, 1, nchar(timelog$filingPeriod) -1)), as.numeric(substr(timelog$filingPeriod, nchar(timelog$filingPeriod), nchar(timelog$filingPeriod))) - 1, sep = ""))
   
   #****************************** import role dates
   if(skip_role == F){ #skip condition to avoid feedback loop in role function
@@ -455,9 +455,9 @@ import_openair_time <- function(name = "time_entry_detail_report__complete_repor
     paste(as.numeric(format(openair[openair$filingPeriod %in% "NANA",]$Date, "%Y")), 
           ceiling(as.numeric(format(openair[openair$filingPeriod %in% "NANA",]$Date, "%m"))/3), sep = "")
   openair$reportingPeriod <- ifelse(substr(openair$filingPeriod, nchar(openair$filingPeriod), nchar(openair$filingPeriod)) == 1,
-                                    paste(as.numeric(format(openair$Project.Filing.Deadline.Date, "%Y")) -1, 4, sep = ""),
-                                    paste(as.numeric(format(openair$Project.Filing.Deadline.Date, "%Y")), ceiling(as.numeric(format(openair$Project.Filing.Deadline.Date, "%m"))/3) - 1, sep = ""))
-  
+                                    paste(as.numeric(substr(openair$filingPeriod, 1, nchar(openair$filingPeriod)-1)) -1, 4, sep = ""),
+                                    paste(as.numeric(substr(openair$filingPeriod, 1, nchar(openair$filingPeriod)-1)), as.numeric(substr(openair$filingPeriod, nchar(openair$filingPeriod), nchar(openair$filingPeriod)))-1, sep = ""))
+
   #reverse User names from "last, first" to "first last"
   resources <- read.csv(textConnection(openair$User), header = F, strip.white=T)
   openair$User <- paste(resources[,2], resources[,1], sep = " ")
