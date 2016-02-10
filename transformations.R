@@ -194,6 +194,7 @@ collapsed_time_with_most_active <- function(complete = T){
   services <- services[services$Filing.Date %in% Q22014_to_date | (services$filing.estimate %in% Q22014_to_date & 
                                                                      is.na(services$Filing.Date)),]
   services <- services[services$filing.estimate <= Sys.Date() | services$Filing.Date <= Sys.Date(),]
+  
   services <- services[services$Status %in% "Completed",]
   
   #####################

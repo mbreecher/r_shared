@@ -184,6 +184,9 @@ import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/w
     # name changes
     services$PSM <- unify_alias(services$PSM)
     
+    # print hour estimates for review
+    print(table(paste(services$Service.Type, services$Form.Type), services$Hours.Estimate))
+    
 	if(output %in% c("psh")){
 	  svc_by_qtr <- aggregate(services$Service.Name, by=list(services$Account.Name, services$reportingPeriod), paste, collapse = "\n")
 	  names(svc_by_qtr) <- c("Account.Name", "reportingPeriod", "Services")
@@ -448,6 +451,9 @@ import_openair_time <- function(name = "time_entry_detail_report__complete_repor
   
   #Construct the Period Identifiers for service grouping  
   openair$filingPeriod <- paste(as.numeric(format(openair$Project.Filing.Deadline.Date, "%Y")), ceiling(as.numeric(format(openair$Project.Filing.Deadline.Date, "%m"))/3), sep = "")
+  openair[openair$filingPeriod %in% "NANA",]$filingPeriod <- 
+    paste(as.numeric(format(openair[openair$filingPeriod %in% "NANA",]$Date, "%Y")), 
+          ceiling(as.numeric(format(openair[openair$filingPeriod %in% "NANA",]$Date, "%m"))/3), sep = "")
   openair$reportingPeriod <- ifelse(substr(openair$filingPeriod, nchar(openair$filingPeriod), nchar(openair$filingPeriod)) == 1,
                                     paste(as.numeric(format(openair$Project.Filing.Deadline.Date, "%Y")) -1, 4, sep = ""),
                                     paste(as.numeric(format(openair$Project.Filing.Deadline.Date, "%Y")), ceiling(as.numeric(format(openair$Project.Filing.Deadline.Date, "%m"))/3) - 1, sep = ""))
@@ -506,24 +512,16 @@ import_openair_booked <- function(name = "PS_Booked_Hours_by_User_Job_Code_Proje
   print(paste(name, "last updated", round(difftime(Sys.time(), file.info(name)$mtime, units = "days"), digits = 1), "days ago", sep = " "))
   
   # cleanup names
-  original_names <- c("ï..Date","Company","Job.code","User","Project","Project.Account",
-                      "Project.Project.owner","Project.Product","Project.Project.Type",
-                      "Project.Form.Type","Project.Quarter.End.Date..QED.","Project.Project.stage",
-                      "Project.SFDC.Project.ID","Project.Filing.Date","Project.Filing.Deadline.Date",
-                      "Project.Account...Year.End.Date","Project.Salesforce.Opportunity.ID",
-                      "Project.Project.Department.hierarchy.node","Resources...All.booked.hours")
-  new_names <- c("Date","Company","Job.code","User","Project","Project.Account",
-                 "Project.owner","Product","Project.Type",
-                 "Form.Type","Quarter.End.Date","Project.stage",
-                 "Services.ID.Long","Filing.Date","Filing.Deadline",             
-                 "Year.End","Opportunity.ID","Department","booked.hours")
-  for(i in 1:length(original_names)){
-    names(booked)[names(booked) %in% original_names[i]] <- new_names[i]
-  }
+  names(booked) <- gsub("[[:punct:]]"," ",names(booked))
+  names(booked) <- gsub("[ ]{1,}",".",names(booked))
+  names(booked) <- gsub("Project.","",names(booked))
+  names(booked) <- gsub(".QED.","",names(booked))
+  names(booked)[names(booked) %in% "Type"] <- "Service.Type"
+
   booked$Quarter.End.Date <- as.Date(booked$Quarter.End.Date, format = "%m/%d/%Y")
   booked$Filing.Date <- as.Date(booked$Filing.Date, format = "%m/%d/%Y")
   booked$Filing.Deadline <- as.Date(booked$Filing.Deadline, format = "%m/%d/%Y")
-  booked$Services.ID <- substr(booked$Services.ID.Long, 1, 15)
+  booked$Services.ID <- substr(booked$SFDC.ID, 1, 15)
   
   booked
 }
