@@ -280,6 +280,26 @@ import_hierarchy <- function(name = "hierarchy.csv"){
   hierarchy <- hierarchy[1:(dim(hierarchy)[1] - 5),]
   print(paste(name, "last updated", round(difftime(Sys.time(), file.info(name)$mtime, units = "days"), digits = 1), "days ago", sep = " "))
   hierarchy$CIK <- as.numeric(hierarchy$CIK)
+  
+  #root node
+  hierarchy$Root.Account <- hierarchy$Parent.Account
+  counter <- 0
+  repeat{
+    for(root in unique(hierarchy$Root.Account)){
+      if(length(hierarchy[hierarchy$Account.Name %in% root,]$Account.Name) > 0){
+        hierarchy[hierarchy$Root.Account %in% root,]$Root.Account <- unique(hierarchy[hierarchy$Account.Name %in% root,]$Parent.Account)
+      }
+    }
+    counter <<- counter + 1
+    if(!T %in% (hierarchy$Root.Account %in% hierarchy[!hierarchy$Account.Name == hierarchy$Root.Account,]$Account.Name)){
+      break
+    }
+    if(counter > 5){
+      print("exit condition: encountered nesting greater than 5 levels deep")
+      break
+    }
+  }
+  
 
   hierarchy
 }
