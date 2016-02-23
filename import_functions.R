@@ -184,9 +184,6 @@ import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/w
     # name changes
     services$PSM <- unify_alias(services$PSM)
     
-    # print hour estimates for review
-    print(table(paste(services$Service.Type, services$Form.Type), services$Hours.Estimate))
-    
 	if(output %in% c("psh")){
 	  svc_by_qtr <- aggregate(services$Service.Name, by=list(services$Account.Name, services$reportingPeriod), paste, collapse = "\n")
 	  names(svc_by_qtr) <- c("Account.Name", "reportingPeriod", "Services")
