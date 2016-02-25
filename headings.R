@@ -1,6 +1,6 @@
 weekyear_to_written <- function(old_names){
   new_names <- c()
-  all_dates <- seq(as.Date("2012/01/01"), Sys.Date() + days(90), by = "day")
+  all_dates <- seq(as.Date("2012-01-01"), Sys.Date() + 90, by = 1)
   all_dates <- data.frame(date = as.Date(all_dates), weekyear = format(all_dates, format = "%y-%U"))
   for (name in old_names){
     if(grepl("-",name)){
@@ -22,7 +22,7 @@ weekyear_to_written <- function(old_names){
 
 weekyear_to_written_with_year <- function(old_names){
   new_names <- c()
-  all_dates <- seq(as.Date("2012/01/01"), Sys.Date() + days(30), by = "day")
+  all_dates <- seq(as.Date("2012-01-01"), Sys.Date() + 30, 1)
   all_dates <- data.frame(date = as.Date(all_dates), weekyear = format(all_dates, format = "%y-%U"))
   for (name in old_names){
     if(grepl("-",name)){
