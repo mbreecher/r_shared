@@ -162,3 +162,14 @@ sequence_yearquarters <- function(min, max, by){
     break
   }
 }
+
+merge_check <- function(x, y, ...){
+  # wrapper for merge that prints source and result sizes to check for expansion
+  result <- merge(x, y, ...)
+  if(dim(x)[1] == dim(result)[1]){
+    print("source and destination are the same size")
+  }else{
+    print(paste0("source is: ", dim(x)[1], " and result is: ", dim(result)[1], " which is a difference of ", dim(result)[1] - dim(x)[1]))
+  }
+  result
+}
