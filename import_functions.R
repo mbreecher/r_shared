@@ -19,7 +19,7 @@ import_timelog <- function(sf_name = "timelog_for_R.csv", oa_name = "time_entry_
     print("no change to salesforce time, loading timelog data...")
   }
   if(include_cs == F){
-    sf_timelog <- sf_timelog[sf_timelog$is_psm == 1 & !is.na(sf_timelog$is_psm), ]    
+    sf_timelog <- sf_timelog[sf_timelog$is_psm == 1 & !is.na(sf_timelog$is_psm), ]  
   }
   
   #import openair time
@@ -35,7 +35,7 @@ import_timelog <- function(sf_name = "timelog_for_R.csv", oa_name = "time_entry_
   
   #exclude openair projects that relate to non-billable time (e.g. TEC or admin)
   oa_timelog <- oa_timelog[oa_timelog$Service %in% oa_timelog[grep("Fixed", oa_timelog$Service) ,]$Service | !oa_timelog$Service.Type %in% "",]    
-  
+  oa_timelog <- oa_timelog[!grepl("Document", oa_timelog$Service),]
   
   # logic to include Project.owner in salesforce timelog
   sf_timelog$Project.owner <- ""
@@ -566,11 +566,11 @@ import_sec <- function(){
   sec_data <- pg_query("
                        SELECT r.report_id, e.name ,e.standard_industry_code as sic, e.reference_number as cik, e.trading_symbol as ticker, 
                           f.entity_id, r.report_id, f.accession_number, f.form_type, f.filing_date, por.report_date,
-                          f.creation_software, e.filer_category, dp.facts
+                          f.creation_software, e.filer_category, dp.facts, e.fiscal_year_end
                         FROM (SELECT DISTINCT filing_number as accession_number, form_type, filing_date, creation_software, filing_id, 
                               entity_id FROM filing) AS f
                         INNER JOIN (select distinct name, entity_id, standard_industry_code, filer_category,
-                                    reference_number, trading_symbol from entity) AS e
+                                    reference_number, trading_symbol, fiscal_year_end from entity) AS e
                       USING (entity_id)
                         INNER JOIN (select distinct report_id, filing_id from report) AS r
                     	USING (filing_id)
