@@ -169,7 +169,7 @@ merge_check <- function(x, y, ...){
   if(dim(x)[1] == dim(result)[1]){
     print("source and destination are the same size")
   }else{
-    print(paste0("sourceA is: ", dim(x)[1], "sourceB is: ", dim(y)[1], " and result is: ", dim(result)[1], " which is a difference of ", dim(result)[1] - dim(x)[1]))
+    print(paste0("sourceA is: ", dim(x)[1], " sourceB is: ", dim(y)[1], " and result is: ", dim(result)[1], " which is a difference of ", dim(result)[1] - dim(x)[1]))
   }
   result
 }
