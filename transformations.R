@@ -18,7 +18,7 @@ collapsed_opportunities <- function(most_active = F){
                   by.y = c("Opportunity..Opportunity.18.Digit.Id", "OpportunityLineItem.Id"), all.x = T)
   
   #temp abigail changes
-  setwd("C:/R/workspace/Ali")
+  setwd("C:/R/workspace/archive/Ali")
   price_update <- read.csv("abigail_price_updates.csv", header = T, stringsAsFactors = F)
   print(paste("abigail_price_updates.csv", "last updated", round(difftime(Sys.time(), file.info("abigail_price_updates.csv")$ctime, units = "days"), digits = 1), "days ago", sep = " "))
   check <- c()
@@ -241,7 +241,7 @@ collapsed_time_with_most_active <- function(complete = T){
   collapsed_time
 }
 
-weekly_time <- function(){
+timelog_by_week <- function(){
   library(reshape2)
   library(plyr)
   
@@ -251,7 +251,6 @@ weekly_time <- function(){
   
   #import services and include customer status = none
   services <- import_services()
-  services <- services[services$Status %in% "Completed",]
   timelog <- import_timelog()
   
   timelog$logged_week_num <- as.numeric(format(timelog$Date, format = "%U"))
@@ -260,32 +259,4 @@ weekly_time <- function(){
   timelog$relative_week_num <- timelog$logged_week_num - timelog$filing_week_num - 52*timelog$yearvar
   
   result <- merge(timelog, services[,!names(services) %in% names(timelog)[!names(timelog) %in% c("Services.ID")]], by = c("Services.ID"))
-}
-
-weekly_time_detail <- function(){
-  library(plyr)
-  
-  # Pull in import functions
-  setwd("C:/R/workspace/shared")
-  source("import_functions.R")
-  source("transformations.R")
-  
-  weekly_time <- weekly_time() #bring in merged time
-  weekly_time <- weekly_time[weekly_time$Date > "2013-06-30",] #remove unreliable time
-  
-  ## *************** moved get_role dates to import_timelog function
-  
-  #set week integer
-  weekly_time$week <- format(weekly_time$Date, format = "%y-%U")
-  labels <- ddply(weekly_time, .var = c("week"), function(x){
-    min <- min(x$Date)
-    max <- max(x$Date)
-    count <- unique(x$User)
-    label <- paste(strftime(min, '%m/%d')," - ", strftime(max, '%m/%d'), sep = "")
-    data.frame(week = x$week, 
-               label = label)
-  })
-  labels <- unique(labels)
-  weekly_time <- merge(weekly_time, labels, by = c("week"), all.x = T)
-
 }
