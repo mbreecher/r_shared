@@ -52,6 +52,10 @@ import_timelog <- function(sf_name = "timelog_for_R.csv", oa_name = "time_entry_
   services <- import_services()
   pairs <- unique(services[,names(services) %in% c("CIK", "Account.Name")])
   timelog <- merge(timelog, pairs, by = "Account.Name", all.x = T)
+  
+  timelog[grepl("Hourly", timelog$Service),]$Service.Type <- "Hourly Service"
+  timelog[grepl("Rush", timelog$Service),]$Service.Type <- "Rush Charges"
+  timelog[grepl("Fixed Fee", timelog$Service),]$Service.Type <- "Fixed Fee Overage"
 
   timelog
 }
@@ -370,6 +374,7 @@ import_salesforce_daily_hours <- function(name = "daily_hours.csv", wd = 'C:/R/w
   
   #set role based on role dates
   daily$role <- role(daily$User, daily$Date, daily$User.Title, daily$is_psm)
+  daily <- daily[!is.na(daily$role),]
   
 daily
   
@@ -424,7 +429,8 @@ import_salesforce_timelog <- function(name = "timelog_for_R.csv", wd = 'C:/R/wor
   
   #****************************** import role dates
   if(skip_role == F){ #skip condition to avoid feedback loop in role function
-    timelog$role <- role(timelog$User, timelog$Date, timelog$User.Title, timelog$is_psm)  
+    timelog$role <- role(timelog$User, timelog$Date, timelog$User.Title, timelog$is_psm)
+    timelog <- timelog[!is.na(timelog$role),]
   }
   
   timelog
@@ -491,6 +497,7 @@ import_openair_time <- function(name = "time_entry_detail_report__complete_repor
     #****************************** import role dates
     
     openair$role <- role(openair$User, openair$Date, openair$User.Job.code, openair$is_psm)
+    openair <- openair[!is.na(openair$role),]
   }
   
   openair$Billable <- 0
