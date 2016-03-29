@@ -140,16 +140,16 @@ sequence_yearweeks <- function(min, max){
   }
 }
 
-sequence_yearquarters <- function(min, max, by){
+sequence_yearquarters <- function(min, max){
   if(min <= max){
     loop = min
     result <- c()
     repeat{
       result <- c(result, loop)
-      if((as.numeric(substr(loop, 5,5)) + by) > 4){
-        loop <- paste(as.numeric(substr(loop, 1,4))+1, by %% 4,  sep = "")
+      if((as.numeric(substr(loop, 5,5)) + 1) > 4){
+        loop <- paste(as.numeric(substr(loop, 1,4)) + 1, 1,  sep = "")
       }else{
-        loop <- paste(substr(loop, 1,4),as.numeric(substr(loop, 5,5))+by, sep = "")
+        loop <- paste(substr(loop, 1,4),as.numeric(substr(loop, 5,5))+1, sep = "")
       }
       if(loop > max){
         return(result)
@@ -157,13 +157,25 @@ sequence_yearquarters <- function(min, max, by){
       }
     }
   }else{
-    print('arguments aren\'t properly ordered')
-    return (result)
-    break
+      loop = min
+      result <- c()
+      repeat{
+        result <- c(result, loop)
+        if((as.numeric(substr(loop, 5,5)) - 1) < 1){
+          loop <- paste(as.numeric(substr(loop, 1,4)) - 1, 4,  sep = "")
+        }else{
+          loop <- paste(substr(loop, 1,4),as.numeric(substr(loop, 5,5))-1, sep = "")
+        }
+        if(loop < max){
+          return(result)
+          break
+        }
+      }
+    }
   }
-}
 
-merge <- function(x, y, ...){
+
+merge_check <- function(x, y, ...){
   # wrap and mask merge to print source and result sizes and check for expansion
   result <- merge(x, y, ...)
   if(dim(x)[1] == dim(result)[1]){
