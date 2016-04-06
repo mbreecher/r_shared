@@ -2,6 +2,7 @@ collapsed_opportunities <- function(most_active = F){
   setwd("C:/R/workspace/shared")
   source("import_functions.r")
   source("transformations.r")
+  source("helpers.R")
   
   opps <- import_opportunities()
   services <- import_services()
@@ -10,12 +11,12 @@ collapsed_opportunities <- function(most_active = F){
   }else{
     collapsed_time_df <- collapsed_time_simple(complete = F)  
   }
-  simple_collapsed <- collapsed_time_df[,!names(collapsed_time_df) %in% names(opps)]
+  opps <- opps[,!names(opps) %in% names(collapsed_time_df)[!names(collapsed_time_df) %in% "Account.Name"]]
   
-  result <- merge(opps[!is.na(opps$Line.Item.18.Digit.Id) & !opps$Line.Item.18.Digit.Id %in% c(""),], 
-                  simple_collapsed[!is.na(simple_collapsed$OpportunityLineItem.Id),], 
-                  by.x = c("Opportunity.18.Digit.Id", "Line.Item.18.Digit.Id"), 
-                  by.y = c("Opportunity..Opportunity.18.Digit.Id", "OpportunityLineItem.Id"), all.x = T)
+  result <- merge_check(collapsed_time_df[!is.na(collapsed_time_df$OpportunityLineItem.Id),], 
+                        opps[!is.na(opps$Line.Item.18.Digit.Id) & !opps$Line.Item.18.Digit.Id %in% c(""),], 
+                        by.x = c("Opportunity..Opportunity.18.Digit.Id", "OpportunityLineItem.Id", "Account.Name"), 
+                        by.y = c("Opportunity.18.Digit.Id", "Line.Item.18.Digit.Id", "Account.Name"), all.x = T)
   
   #temp abigail changes
   setwd("C:/R/workspace/archive/Ali")
@@ -31,7 +32,7 @@ collapsed_opportunities <- function(most_active = F){
   
   names(result)[names(result) %in% "Account.Name"] <- "Opportunity.Account.Name"
   service_target <- services[,names(services) %in% c("Account.Name", "Services.ID")]
-  result <- merge(result, service_target, by = "Services.ID")
+  result <- merge_check(result, service_target, by = "Services.ID")
   
   result$monthyear <- format(result$filing.estimate, format = "%y-%m")
   
@@ -159,7 +160,7 @@ collapsed_time_simple <- function(complete = T){
   timelog <- import_timelog()
   
   #initial exclusions. pre-Q2 2012 time and in-progress or not started services
-  if(complete == T){
+  if(complete){
     services <- services[services$Status %in% "Completed",]  
   }
   
@@ -185,6 +186,7 @@ collapsed_time_with_most_active <- function(complete = T){
   # Pull in import functions
   setwd("C:/R/workspace/shared")
   source("import_functions.R")
+  source("helpers.R")
   
   #import services and include customer status = none
   services <- import_services()
@@ -195,7 +197,9 @@ collapsed_time_with_most_active <- function(complete = T){
                                                                      is.na(services$Filing.Date)),]
   services <- services[services$filing.estimate <= Sys.Date() | services$Filing.Date <= Sys.Date(),]
   
-  services <- services[services$Status %in% "Completed",]
+  if(complete){
+    services <- services[services$Status %in% "Completed",]  
+  }
   
   #####################
   #  Collapsed Time
@@ -213,14 +217,14 @@ collapsed_time_with_most_active <- function(complete = T){
     )
   })
   
-  agg_time <- merge(agg_time, most_active, by = "Services.ID", all.x = T)
+  agg_time <- merge_check(agg_time, most_active, by = "Services.ID", all.x = T)
   
   billable_time <- aggregate(Hours ~ Related.Service.Id, data = timelog, FUN = sum)
   billable_time <- billable_time[!billable_time$Related.Service.Id %in% "",]
   names(billable_time) <- c("Services.ID", "Billable.Hours")
   
-  collapsed_time <- merge(services, agg_time, by = c("Services.ID"), all.x = T)
-  collapsed_time <- merge(collapsed_time, billable_time, by = c("Services.ID"), all.x = T)
+  collapsed_time <- merge_check(services, agg_time, by = c("Services.ID"), all.x = T)
+  collapsed_time <- merge_check(collapsed_time, billable_time, by = c("Services.ID"), all.x = T)
   
   # computer priors and attach to k_time
   averages <- ddply(collapsed_time[!is.na(collapsed_time$Hours),], 
@@ -230,7 +234,7 @@ collapsed_time_with_most_active <- function(complete = T){
                                   mean = mean(x$Hours),
                                   sd = sd(x$Hours))
                     })
-  collapsed_time <- merge(collapsed_time, averages, by = c("Service.Type", "Form.Type", "reportingPeriod"))
+  collapsed_time <- merge_check(collapsed_time, averages, by = c("Service.Type", "Form.Type", "reportingPeriod"), all.x = T)
   collapsed_time$project_normalized_time <- NA
   collapsed_time[!is.na(collapsed_time$sd),]$project_normalized_time <- 
     (collapsed_time[!is.na(collapsed_time$sd),]$Hours - collapsed_time[!is.na(collapsed_time$sd),]$mean)/
