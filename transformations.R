@@ -1,4 +1,4 @@
-collapsed_opportunities <- function(most_active = F){
+collapsed_opportunities <- function(most_active = F, complete = F){
   setwd("C:/R/workspace/shared")
   source("import_functions.r")
   source("transformations.r")
@@ -7,9 +7,9 @@ collapsed_opportunities <- function(most_active = F){
   opps <- import_opportunities()
   services <- import_services()
   if(most_active){
-    collapsed_time_df <- collapsed_time_with_most_active(complete = F)
+    collapsed_time_df <- collapsed_time_with_most_active(complete = complete)
   }else{
-    collapsed_time_df <- collapsed_time_simple(complete = F)  
+    collapsed_time_df <- collapsed_time_simple(complete = complete)  
   }
   opps <- opps[,!names(opps) %in% names(collapsed_time_df)[!names(collapsed_time_df) %in% "Account.Name"]]
   
