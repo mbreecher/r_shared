@@ -565,37 +565,58 @@ import_salesforce_filing_data <-function(name = "salesforce_filing_data.csv", wd
     workload
 }
 
-import_sec <- function(){
-  library(RPostgreSQL)
-  setwd("C:/R/workspace/shared")
-  source("herm_query.R")
-  start = Sys.time()
-  sec_data <- pg_query("
-                       SELECT r.report_id, e.name ,e.standard_industry_code as sic, e.reference_number as cik, e.trading_symbol as ticker, 
-                          f.entity_id, r.report_id, f.accession_number, f.form_type, f.filing_date, por.report_date,
-                          f.creation_software, e.filer_category, dp.facts, e.fiscal_year_end
-                        FROM (SELECT DISTINCT filing_number as accession_number, form_type, filing_date, creation_software, filing_id, 
-                              entity_id FROM filing) AS f
-                        INNER JOIN (select distinct name, entity_id, standard_industry_code, filer_category,
-                                    reference_number, trading_symbol, fiscal_year_end from entity) AS e
-                      USING (entity_id)
-                        INNER JOIN (select distinct report_id, filing_id from report) AS r
-                    	USING (filing_id)
-                        INNER JOIN (select report_id, count(*) AS facts 
-                    		from data_point
-                    		where not source_line is null
-                    		group by report_id) as dp USING (report_id)
-                        LEFT JOIN (select report_id, value as report_date from aspect as a
-                    		JOIN data_point as dp using (aspect_id)
-                    		where a.name like '%DocumentPeriodEndDate%') AS por
-                    	USING (report_id)
-                        WHERE f.filing_date >= current_date - interval '365 days'
-                       ")
-  print ("Query Time:")
-  print (Sys.time() - start)
+import_sec <- function(legacy = F){
   
-  sec_data$report_date <- as.Date(sec_data$report_date, format = "%Y-%m-%d")
+  if(legacy){
+    library(RPostgreSQL)
+    setwd("C:/R/workspace/shared")
+    source("herm_query.R")
+    start = Sys.time()
+    sec_data <- pg_query("
+                         SELECT r.report_id, e.name ,e.standard_industry_code as sic, e.reference_number as cik, e.trading_symbol as ticker, 
+                            f.entity_id, r.report_id, f.accession_number, f.form_type, f.filing_date, por.report_date,
+                            f.creation_software, e.filer_category, dp.facts, e.fiscal_year_end
+                          FROM (SELECT DISTINCT filing_number as accession_number, form_type, filing_date, creation_software, filing_id, 
+                                entity_id FROM filing) AS f
+                          INNER JOIN (select distinct name, entity_id, standard_industry_code, filer_category,
+                                      reference_number, trading_symbol, fiscal_year_end from entity) AS e
+                        USING (entity_id)
+                          INNER JOIN (select distinct report_id, filing_id from report) AS r
+                      	USING (filing_id)
+                          INNER JOIN (select report_id, count(*) AS facts 
+                      		from data_point
+                      		where not source_line is null
+                      		group by report_id) as dp USING (report_id)
+                          LEFT JOIN (select report_id, value as report_date from aspect as a
+                      		JOIN data_point as dp using (aspect_id)
+                      		where a.name like '%DocumentPeriodEndDate%') AS por
+                      	USING (report_id)
+                          WHERE f.filing_date >= current_date - interval '365 days'
+                         ")
+    print ("Query Time:")
+    print (Sys.time() - start)
+    sec_data$report_date <- as.Date(sec_data$report_date, format = "%Y-%m-%d")
+  }else{
+    library(RMySQL)
+    setwd("C:/R/workspace/shared")
+    source("wh_query.R")
+    start = Sys.time()
+    sec_data <- wh_query("
+                         select co.company_name,cloud.status, fi.sic, fi.central_index_key as cik, co.ticker_symbol, accession_number, 
+                    	    form_type, filing_date, software, cloud.registrant_type as filer_category, fact_count, 
+                          cloud.year_end, period as report_date, wf_sf_account_id from f_fi_filing as fi
+                          join d_company as co using (company_id)
+                          join d_company_subcloud as cloud using (company_id)
+                          where filing_date >= DATE_SUB(NOW(),INTERVAL 400 DAY) and
+                          subcloud_name like 'SEC%' and cloud.status = 'Customer'
+                         ")
+    print ("Query Time:")
+    print (Sys.time() - start)
+    
+    sec_data$report_date <- as.Date(sec_data$report_date, format = "%Y%m%d")
+  }
   
+  sec_data <- sec_data[sec_data$form_type %in% c("10-Q", "10-K", "10-Q/A", "10-K/A"),]
   #calculate filing deadline estimate for all projects
   #for facts with form type and registrant type, set reporting offset
   sec_data$reporting_offset <- paste(sec_data$filer_category, sec_data$form_type, Sep = "") #placeholder lookup value
