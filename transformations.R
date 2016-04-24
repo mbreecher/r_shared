@@ -15,8 +15,8 @@ collapsed_opportunities <- function(most_active = F, complete = F){
   
   result <- merge_check(collapsed_time_df[!is.na(collapsed_time_df$OpportunityLineItem.Id),], 
                         opps[!is.na(opps$Line.Item.18.Digit.Id) & !opps$Line.Item.18.Digit.Id %in% c(""),], 
-                        by.x = c("Opportunity..Opportunity.18.Digit.Id", "OpportunityLineItem.Id", "Account.Name"), 
-                        by.y = c("Opportunity.18.Digit.Id", "Line.Item.18.Digit.Id", "Account.Name"), all.x = T)
+                        by.x = c("Opportunity..Opportunity.18.Digit.Id", "OpportunityLineItem.Id"), 
+                        by.y = c("Opportunity.18.Digit.Id", "Line.Item.18.Digit.Id"), all.x = T)
   
   #temp abigail changes
   setwd("C:/R/workspace/archive/Ali")
