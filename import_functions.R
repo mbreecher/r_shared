@@ -124,7 +124,9 @@ import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/w
       services <- services[!is.na(services$Quarter.End), ] #remove services without quarter ends (can't place them)  
       services <- services[!(services$Service.Type %in% c('Reserve Hours', 'Other', 'Training', '')), ] #Remove Reserve Projects
     }else{
-      services <- services[!(services$Service.Type %in% c('Training')), ] #Remove Training Projects
+      services[grepl("Hourly", services$Service.Name),]$Service.Type <- "Hourly Service"
+      services[grepl("Rush", services$Service.Name),]$Service.Type <- "Rush Charges"
+      services <- services[!(services$Service.Type %in% c('Training', '')), ] #Remove Training Projects
     }
     
     #remove CS migrations for PSH, but not general case
@@ -148,7 +150,7 @@ import_services <- function(name = "services_for_ps_history_R.csv", wd = 'C:/R/w
     services$reportingOffset[services$reportingOffset %in% c("Accelerated Filer Q-K ", "Accelerated Filer 10-K ", "Accelerated Filer K-K ")] <- 75
     services$reportingOffset[services$reportingOffset %in% c("Large Accelerated Filer Q-K ", "Large Accelerated Filer 10-K ", "Large Accelerated Filer K-K ", "Large Accelerated Filer 20-F - 20-F ")] <- 60
     #
-    services$reportingOffset[!(services$reportingOffset %in% c(40, 45, 60, 75, 90))] = NA
+    services$reportingOffset[!(services$reportingOffset %in% c(40, 45, 60, 75, 90))] <- NA
     
     #with report offset, calculate filing deadline estimate
     services$filing.estimate <- NA
@@ -455,6 +457,7 @@ import_openair_time <- function(name = "time_entry_detail_report__complete_repor
   names(openair) <- gsub("- ","",names(openair))
   names(openair) <- gsub("[[:punct:]]"," ",names(openair))
   names(openair) <- gsub("[ ]{1,}",".",names(openair))
+  names(openair) <- gsub("[.]$","",names(openair), perl = T)
   openair$services_id_15 <- substr(openair$"Project.SFDC.Project.ID",1,15)
   
   #cast data values
@@ -539,7 +542,8 @@ import_openair_booked <- function(name = "PS_Booked_Hours_by_User_Job_Code_Proje
   names(booked) <- gsub("[[:punct:]]"," ",names(booked))
   names(booked) <- gsub("[ ]{1,}",".",names(booked))
   names(booked) <- gsub("Project.","",names(booked))
-  names(booked) <- gsub(".QED.","",names(booked))
+  names(openair) <- gsub("[.]$","",names(openair), perl = T)
+  names(booked) <- gsub(".QED","",names(booked))
   names(booked)[names(booked) %in% "Type"] <- "Service.Type"
 
   booked$Quarter.End.Date <- as.Date(booked$Quarter.End.Date, format = "%m/%d/%Y")
