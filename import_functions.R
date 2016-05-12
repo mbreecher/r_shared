@@ -454,10 +454,7 @@ import_openair_time <- function(name = "time_entry_detail_report__complete_repor
                     , digits = 1), "days ago", sep = " "))
 
   #trim names
-  names(openair) <- gsub("- ","",names(openair))
-  names(openair) <- gsub("[[:punct:]]"," ",names(openair))
-  names(openair) <- gsub("[ ]{1,}",".",names(openair))
-  names(openair) <- gsub("[.]$","",names(openair), perl = T)
+  names(openair) <- clean_up_openair_names(names(openair))
   openair$services_id_15 <- substr(openair$"Project.SFDC.Project.ID",1,15)
   
   #cast data values
@@ -538,11 +535,8 @@ import_openair_booked <- function(name = "PS_Booked_Hours_by_User_Job_Code_Proje
   booked <- read.csv(name, header = T , stringsAsFactors=F)
   print(paste(name, "last updated", round(difftime(Sys.time(), file.info(name)$mtime, units = "days"), digits = 1), "days ago", sep = " "))
   
-  # cleanup names
-  names(booked) <- gsub("[[:punct:]]"," ",names(booked))
-  names(booked) <- gsub("[ ]{1,}",".",names(booked))
+  names(booked) <- clean_up_openair_names(names(booked))
   names(booked) <- gsub("Project.","",names(booked))
-  names(openair) <- gsub("[.]$","",names(openair), perl = T)
   names(booked) <- gsub(".QED","",names(booked))
   names(booked)[names(booked) %in% "Type"] <- "Service.Type"
 

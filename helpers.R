@@ -185,3 +185,11 @@ merge_check <- function(x, y, ...){
   }
   result
 }
+
+clean_up_openair_names <- function(names){
+  names <- gsub("- ","",names)
+  names <- gsub("[[:punct:]]"," ",names)
+  names <- gsub("[ ]{1,}",".",names)
+  names <- gsub("[.]$","",names, perl = T)
+  names
+}
