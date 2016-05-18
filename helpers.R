@@ -193,3 +193,15 @@ clean_up_openair_names <- function(names){
   names <- gsub("[.]$","",names, perl = T)
   names
 }
+
+import_and_merge_updated_time <- function(source_df, update_file_name){
+  setwd("C:/R/workspace/shared")
+  source("import_functions.r")
+  update_df <- import_openair_time(name = update_file_name, include_cs = T)
+  update_df <- aggregate(Time.Hours ~ ., data = update_df, sum)
+  print(paste("Adding ",  dim(update_df)[1], " rows to ", dim(source_df)[1], "rows in existing dataframe. Expect ", dim(update_df)[1] + dim(source_df)[1] ))
+  result <- rbind(source_df, update_df)
+  source_df <- aggregate(Time.Hours ~ ., data = result, max)
+  print(paste("result is ", dim(source_df)[1]))
+  source_df
+}
