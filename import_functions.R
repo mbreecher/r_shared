@@ -23,37 +23,37 @@ import_timelog <- function(sf_name = "timelog_for_R.csv", oa_name = "time_entry_
   }
   
   #import openair time
-#   oa_timelog <- import_openair_time(...)
+  oa_timelog <- import_openair_time(...)
   
   setwd('C:/R/workspace/source')
-  # 1. read complete timelog file
-  data_updated = F
-  if(file.info(oa_name)$mtime > file.info('oa_time.Rda')$mtime){
-    print("OpenAir complete timelog report has changed, importing new data...")
-    oa_timelog <- import_openair_time(include_cs = T)
-    oa_timelog <- aggregate(Time.Hours ~ ., data = oa_timelog, sum)
-    data_updated = T
-  }else{
-    oa_timelog <- readRDS(file = "oa_time.Rda")
-    print("no change to complete OpenAir time, loading timelog data...")
-  }
-
-  # read current quarter timelog file
-  cq_name = "time_entry_detail_report__CQ_report.csv"
-  if(file.info(cq_name)$mtime > file.info('oa_time.Rda')$mtime){
-    print("Newer current quarter data available, importing new data...")
-    oa_timelog <- import_and_merge_updated_time(oa_timelog, cq_name)
-    data_updated = T
-  }
-
-  # read prior quarter timelog file
-  pq_name = "time_entry_detail_report__PQ_report.csv"
-  if(file.info(pq_name)$mtime > file.info('oa_time.Rda')$mtime){
-    print("Newer current quarter data available, importing new data...")
-    oa_timelog <- import_and_merge_updated_time(oa_timelog, pq_name)
-    data_updated = T
-  }
-  if(data_updated){saveRDS(oa_timelog, file = "oa_time.Rda")}
+#   # 1. read complete timelog file
+#   data_updated = F
+#   if(file.info(oa_name)$mtime > file.info('oa_time.Rda')$mtime){
+#     print("OpenAir complete timelog report has changed, importing new data...")
+#     oa_timelog <- import_openair_time(include_cs = T)
+#     oa_timelog <- aggregate(Time.Hours ~ ., data = oa_timelog, sum)
+#     data_updated = T
+#   }else{
+#     oa_timelog <- readRDS(file = "oa_time.Rda")
+#     print("no change to complete OpenAir time, loading timelog data...")
+#   }
+# 
+#   # read current quarter timelog file
+#   cq_name = "time_entry_detail_report__CQ_report.csv"
+#   if(file.info(cq_name)$mtime > file.info('oa_time.Rda')$mtime){
+#     print("Newer current quarter data available, importing new data...")
+#     oa_timelog <- import_and_merge_updated_time(oa_timelog, cq_name)
+#     data_updated = T
+#   }
+# 
+#   # read prior quarter timelog file
+#   pq_name = "time_entry_detail_report__PQ_report.csv"
+#   if(file.info(pq_name)$mtime > file.info('oa_time.Rda')$mtime){
+#     print("Newer current quarter data available, importing new data...")
+#     oa_timelog <- import_and_merge_updated_time(oa_timelog, pq_name)
+#     data_updated = T
+#   }
+#   if(data_updated){saveRDS(oa_timelog, file = "oa_time.Rda")}
 
   if(include_cs == F){
     oa_timelog <- oa_timelog[oa_timelog$is_psm == 1 & !is.na(oa_timelog$is_psm), ]  
