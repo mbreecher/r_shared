@@ -1,7 +1,7 @@
 #I wanted to separate import and cleanup functions to minimize the noise in the aggregation
 
 
-import_timelog <- function(sf_name = "timelog_for_R.csv", oa_name = "time_entry_detail_report__complete_report.csv",include_cs=F, no_role = F, ...){
+import_timelog <- function(sf_name = "timelog_for_R.csv", oa_name = "time_entry_detail_report__complete_report.csv",include_cs=F, skip_role = F, ...){
   library(plyr)
   library(reshape2)
   setwd("C:/R/workspace/shared")
@@ -12,7 +12,7 @@ import_timelog <- function(sf_name = "timelog_for_R.csv", oa_name = "time_entry_
   setwd('C:/R/workspace/source')
   if(file.info(sf_name)$mtime > file.info('sf_time.Rda')$mtime){
     print("salesforce timelog report has changed, importing salesforce timelog data...")
-    sf_timelog <- import_salesforce_timelog()
+    sf_timelog <- import_salesforce_timelog(skip_role = skip_role, ...)
     saveRDS(sf_timelog, file = "sf_time.Rda")  
   }else{
     sf_timelog <- readRDS(file = "sf_time.Rda")
@@ -23,11 +23,11 @@ import_timelog <- function(sf_name = "timelog_for_R.csv", oa_name = "time_entry_
   }
   
   #import openair time
-  oa_timelog <- import_openair_time(...)
+  oa_timelog <- import_openair_time(skip_role = skip_role, ...)
   
   setwd('C:/R/workspace/source')
 
-  if(include_cs == F){
+  if(!include_cs & !skip_role){
     oa_timelog <- oa_timelog[oa_timelog$is_psm == 1 & !is.na(oa_timelog$is_psm), ]  
   }
   
@@ -535,24 +535,6 @@ import_openair_workload <- function(name = "Team_Workload_report_pivot.csv", wd 
   workload$Filing.Deadline <- as.Date(workload$Filing.Deadline, format = "%m/%d/%Y")
   
   workload
-}
-
-import_openair_booked <- function(name = "PS_Booked_Hours_by_User_Job_Code_Project_report_pivot.csv", wd = "C:/R/workspace/source"){
-  setwd(wd)
-  booked <- read.csv(name, header = T , stringsAsFactors=F)
-  print(paste(name, "last updated", round(difftime(Sys.time(), file.info(name)$mtime, units = "days"), digits = 1), "days ago", sep = " "))
-  
-  names(booked) <- clean_up_openair_names(names(booked))
-  names(booked) <- gsub("Project.","",names(booked))
-  names(booked) <- gsub(".QED","",names(booked))
-  names(booked)[names(booked) %in% "Type"] <- "Service.Type"
-
-  booked$Quarter.End.Date <- as.Date(booked$Quarter.End.Date, format = "%m/%d/%Y")
-  booked$Filing.Date <- as.Date(booked$Filing.Date, format = "%m/%d/%Y")
-  booked$Filing.Deadline <- as.Date(booked$Filing.Deadline, format = "%m/%d/%Y")
-  booked$Services.ID <- substr(booked$SFDC.ID, 1, 15)
-  
-  booked
 }
 
 import_salesforce_filing_data <-function(name = "salesforce_filing_data.csv", wd = "C:/R/workspace/source"){

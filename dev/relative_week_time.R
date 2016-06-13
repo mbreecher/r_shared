@@ -28,7 +28,7 @@ import_relative_week_time <- function(startDate = seq(Sys.Date(), by = "-1 year"
           Service.Type = unique(x$Service.Type),
           Form.Type = unique(x$Form.Type),
           Quarter.End = unique(x$Quarter.End),
-          reportingPeriod = unique(x$reportingPeriod),
+          reportingPeriod = max(unique(x$reportingPeriod)),
           Filing.Date = unique(x[x$Date %in% max(x$Date),]$Filing.Date),
           Status = unique(x$Status),
           Hours.Estimate = unique(x$Hours.Estimate),
