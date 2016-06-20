@@ -537,6 +537,24 @@ import_openair_workload <- function(name = "Team_Workload_report_pivot.csv", wd 
   workload
 }
 
+import_openair_booked <- function(name = "PS_Booked_Hours_by_User_Job_Code_Project_report_pivot.csv", wd = "C:/R/workspace/source"){
+  setwd(wd)
+  booked <- read.csv(name, header = T , stringsAsFactors=F)
+  print(paste(name, "last updated", round(difftime(Sys.time(), file.info(name)$mtime, units = "days"), digits = 1), "days ago", sep = " "))
+  
+  names(booked) <- clean_up_openair_names(names(booked))
+  names(booked) <- gsub("Project.","",names(booked))
+  names(booked) <- gsub(".QED","",names(booked))
+  names(booked)[names(booked) %in% "Type"] <- "Service.Type"
+  
+  booked$Quarter.End.Date <- as.Date(booked$Quarter.End.Date, format = "%m/%d/%Y")
+  booked$Filing.Date <- as.Date(booked$Filing.Date, format = "%m/%d/%Y")
+  booked$Filing.Deadline <- as.Date(booked$Filing.Deadline, format = "%m/%d/%Y")
+  booked$Services.ID <- substr(booked$SFDC.ID, 1, 15)
+  
+  booked
+}
+
 import_salesforce_filing_data <-function(name = "salesforce_filing_data.csv", wd = "C:/R/workspace/source"){
     setwd(wd)
     workload <- read.csv(name, header = T , stringsAsFactors=F)
